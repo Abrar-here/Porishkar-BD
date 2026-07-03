@@ -113,3 +113,11 @@ export const loginUser = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+// @desc    Get the currently logged-in user's profile
+// @route   GET /api/auth/me
+// @access  Private (requires token)
+export const getMe = async (req, res) => {
+  // req.user was attached by the protect middleware
+  res.status(200).json({ user: req.user });
+};
