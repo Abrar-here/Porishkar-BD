@@ -3,11 +3,12 @@ import { useAuth } from "./context/AuthContext";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import ReportForm from "./pages/ReportForm";
+import MyReports from "./pages/MyReports";
 
 function App() {
   const { user, loading } = useAuth();
 
-  // While checking for an existing session, show a simple loading screen
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -18,7 +19,6 @@ function App() {
 
   return (
     <Routes>
-      {/* If logged in, send them to dashboard; else show login */}
       <Route
         path="/"
         element={<Navigate to={user ? "/dashboard" : "/login"} />}
@@ -34,6 +34,14 @@ function App() {
       <Route
         path="/dashboard"
         element={user ? <Dashboard /> : <Navigate to="/login" />}
+      />
+      <Route
+        path="/report"
+        element={user ? <ReportForm /> : <Navigate to="/login" />}
+      />
+      <Route
+        path="/my-reports"
+        element={user ? <MyReports /> : <Navigate to="/login" />}
       />
     </Routes>
   );
