@@ -14,6 +14,8 @@ function ReportForm() {
       address: "",
     },
   });
+  const [images, setImages] = useState([]);
+  const [previews, setPreviews] = useState([]);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -28,11 +30,27 @@ function ReportForm() {
     });
   };
 
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files).slice(0, 5);
+    setImages(files);
+    const urls = files.map((file) => URL.createObjectURL(file));
+    setPreviews(urls);
+  };
+
   const handleSubmit = async () => {
     setError("");
     setSubmitting(true);
     try {
-      const res = await api.post("/reports", form);
+      const formData = new FormData();
+      formData.append("category", form.category);
+      formData.append("description", form.description);
+      formData.append("location", JSON.stringify(form.location));
+      images.forEach((img) => formData.append("images", img));
+
+      const res = await api.post("/reports", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
       navigate("/my-reports", {
         state: { caseReference: res.data.report.caseReference },
       });
@@ -127,14 +145,33 @@ function ReportForm() {
               </p>
             </div>
 
-            {/* Photo upload placeholder */}
+            {/* Photo upload */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Photos (up to 5)
               </label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center text-gray-400 text-sm">
-                📷 Photo upload coming soon (Cloudinary integration)
-              </div>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleImageChange}
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+              />
+              {previews.length > 0 && (
+                <div className="flex gap-2 mt-3 flex-wrap">
+                  {previews.map((url, i) => (
+                    <img
+                      key={i}
+                      src={url}
+                      alt={`Preview ${i + 1}`}
+                      className="w-20 h-20 object-cover rounded-lg border border-gray-200"
+                    />
+                  ))}
+                </div>
+              )}
+              <p className="text-xs text-gray-400 mt-1">
+                JPG, PNG or WebP. Max 5MB each.
+              </p>
             </div>
 
             <button
@@ -142,7 +179,7 @@ function ReportForm() {
               disabled={submitting}
               className="w-full py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:opacity-60 transition-colors"
             >
-              {submitting ? "Submitting…" : "Submit report"}
+              {submitting ? "Uploading and submitting…" : "Submit report"}
             </button>
           </div>
         </div>

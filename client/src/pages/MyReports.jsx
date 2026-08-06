@@ -133,7 +133,20 @@ function MyReports() {
                   </button>
                 )}
               </div>
-
+              {/* Image gallery — only shows if the report has photos */}
+              {report.images && report.images.length > 0 && (
+                <div className="flex gap-2 mb-3 flex-wrap">
+                  {report.images.map((url, i) => (
+                    <img
+                      key={i}
+                      src={url}
+                      alt={`Report photo ${i + 1}`}
+                      className="w-20 h-20 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-90"
+                      onClick={() => window.open(url, "_blank")}
+                    />
+                  ))}
+                </div>
+              )}
               <div className="flex justify-between items-center text-xs text-gray-400">
                 <span>📍 {report.location.address}</span>
                 <span>

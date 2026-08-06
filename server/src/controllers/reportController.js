@@ -22,22 +22,35 @@ export const createReport = async (req, res) => {
       });
     }
 
-    if (!location.lat || !location.lng || !location.address) {
+    // location comes as a JSON string from multipart/form-data
+    let parsedLocation;
+    try {
+      parsedLocation =
+        typeof location === "string" ? JSON.parse(location) : location;
+    } catch {
+      return res.status(400).json({ message: "Invalid location format" });
+    }
+
+    if (!parsedLocation.lat || !parsedLocation.lng || !parsedLocation.address) {
       return res.status(400).json({
         message: "Location must include lat, lng, and address",
       });
     }
 
-    // 2. Generate the case reference
+    // 2. Collect uploaded image URLs from Cloudinary
+    // req.files is populated by the multer middleware
+    const images = req.files ? req.files.map((file) => file.path) : [];
+
+    // 3. Generate the case reference
     const caseReference = await generateCaseReference();
 
-    // 3. Create the report
+    // 4. Create the report
     const report = await WasteReport.create({
       reportedBy: req.user._id,
       category,
       description,
-      location,
-      images: req.body.images || [],
+      location: parsedLocation,
+      images,
       caseReference,
     });
 
@@ -49,6 +62,7 @@ export const createReport = async (req, res) => {
         category: report.category,
         description: report.description,
         location: report.location,
+        images: report.images,
         status: report.status,
         createdAt: report.createdAt,
       },
@@ -57,7 +71,6 @@ export const createReport = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-
 // @desc    Get all reports by the logged-in citizen
 // @route   GET /api/reports/my
 // @access  Private (citizen only)
