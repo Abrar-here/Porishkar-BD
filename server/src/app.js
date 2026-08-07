@@ -2,11 +2,12 @@ import express from "express";
 import cors from "cors";
 import authRoutes from "./routes/authRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
-
+import listingRoutes from "./routes/listingRoutes.js";
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use("/api/listings", listingRoutes);
 
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", message: "PorishkarBD API is running" });

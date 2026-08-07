@@ -1,4 +1,10 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  Navigate,
+  Outlet,
+} from "react-router-dom";
+
 import { useAuth } from "./context/AuthContext";
 
 import Register from "./pages/Register";
@@ -13,107 +19,130 @@ import ListingDetails from "./pages/ListingDetails";
 import MyListings from "./pages/MyListings";
 import EditListing from "./pages/EditListing";
 
+import Navbar from "./components/Navbar";
+
+
+// Layout for logged-in pages
+function ProtectedLayout() {
+  const { user } = useAuth();
+
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
+
+  return (
+    <>
+      <Navbar />
+
+      <Outlet />
+    </>
+  );
+}
+
+
 function App() {
   const { user, loading } = useAuth();
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <p className="text-gray-500">Loading...</p>
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <p className="text-gray-500">
+          Loading...
+        </p>
       </div>
     );
   }
 
   return (
     <Routes>
+
+      {/* Starting page */}
       <Route
         path="/"
-        element={<Navigate to={user ? "/dashboard" : "/login"} />}
+        element={
+          <Navigate
+            to={user ? "/dashboard" : "/login"}
+          />
+        }
       />
 
+      {/* Public Routes */}
       <Route
         path="/register"
-        element={user ? <Navigate to="/dashboard" /> : <Register />}
+        element={
+          user
+            ? <Navigate to="/dashboard" />
+            : <Register />
+        }
       />
 
       <Route
         path="/login"
-        element={user ? <Navigate to="/dashboard" /> : <Login />}
+        element={
+          user
+            ? <Navigate to="/dashboard" />
+            : <Login />
+        }
       />
 
-      <Route
-        path="/dashboard"
-        element={user ? <Dashboard /> : <Navigate to="/login" />}
-      />
 
-      <Route
-        path="/report"
-        element={user ? <ReportForm /> : <Navigate to="/login" />}
-      />
+      {/* Logged-in Routes */}
+      <Route element={<ProtectedLayout />}>
 
-      <Route
-        path="/my-reports"
-        element={user ? <MyReports /> : <Navigate to="/login" />}
-      />
+        <Route
+          path="/dashboard"
+          element={<Dashboard />}
+        />
 
-      <Route
-      path="/marketplace"
-      element={<Marketplace />}
-    />
+        <Route
+          path="/report"
+          element={<ReportForm />}
+        />
 
-    <Route
-      path="/marketplace/create"
-      element={<CreateListing />}
-    />
+        <Route
+          path="/my-reports"
+          element={<MyReports />}
+        />
 
-    <Route
-      path="/marketplace/:id"
-      element={<ListingDetails />}
-    />
+        {/* F09 Marketplace */}
+        <Route
+          path="/marketplace"
+          element={<Marketplace />}
+        />
 
-    <Route
-      path="/my-listings"
-      element={<MyListings />}
-    />
+        <Route
+          path="/marketplace/create"
+          element={<CreateListing />}
+        />
 
-    <Route
-      path="/my-listings/:id/edit"
-      element={<EditListing />}
-    />
+        <Route
+          path="/marketplace/:id"
+          element={<ListingDetails />}
+        />
+
+        <Route
+          path="/my-listings"
+          element={<MyListings />}
+        />
+
+        <Route
+          path="/my-listings/:id/edit"
+          element={<EditListing />}
+        />
+
+      </Route>
 
 
-
-
-      
-      {/* <Route
-        path="/marketplace"
-        element={user ? <Marketplace /> : <Navigate to="/login" />}
-      />
-
-      <Route
-        path="/marketplace/create"
-        element={user ? <CreateListing /> : <Navigate to="/login" />}
-      />
-
-      <Route
-        path="/marketplace/:id"
-        element={user ? <ListingDetails /> : <Navigate to="/login" />}
-      />
-
-      <Route
-        path="/my-listings"
-        element={user ? <MyListings /> : <Navigate to="/login" />}
-      />
-
-      <Route
-        path="/my-listings/:id/edit"
-        element={user ? <EditListing /> : <Navigate to="/login" />}
-      /> */}
-
+      {/* Wrong URL */}
       <Route
         path="*"
-        element={<Navigate to={user ? "/dashboard" : "/login"} />}
+        element={
+          <Navigate
+            to={user ? "/dashboard" : "/login"}
+          />
+        }
       />
+
     </Routes>
   );
 }

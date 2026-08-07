@@ -27,4 +27,32 @@ export const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
 });
 
+
+
+
+
+
+
+// ==========================================
+// Fahim's PART - F09 Marketplace Listings
+// Do not remove THIS
+// ==========================================
+
+const marketplaceStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "marketplace-listings",
+    allowed_formats: ["jpg", "jpeg", "png", "webp"],
+    transformation: [
+      { width: 1200, quality: "auto", crop: "limit" }
+    ],
+  },
+});
+
+export const marketplaceUpload = multer({
+  storage: marketplaceStorage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+});
+
 export default cloudinary;
+
