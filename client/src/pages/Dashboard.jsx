@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
 import RequestPickupModal from "./RequestPickupModal";
 
@@ -7,6 +8,7 @@ const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   // Determine user role
   const isCollector =
@@ -78,7 +80,9 @@ export default function Dashboard() {
       let minutes = 0;
 
       if (item.pickupTime) {
-        const match = item.pickupTime.trim().match(/^(\d{1,2}):(\d{2})\s*([AP]M)?$/i);
+        const match = item.pickupTime
+          .trim()
+          .match(/^(\d{1,2}):(\d{2})\s*([AP]M)?$/i);
         if (match) {
           hours = parseInt(match[1], 10);
           minutes = parseInt(match[2], 10);
@@ -94,7 +98,7 @@ export default function Dashboard() {
         baseDate.getUTCMonth(),
         baseDate.getUTCDate(),
         hours,
-        minutes
+        minutes,
       ).getTime();
 
       const now = Date.now();
@@ -140,7 +144,9 @@ export default function Dashboard() {
       // Logic filtering if generic routes are returned as fallback
       if (isCollector) {
         if (activeTab === "available") {
-          setPickups(reportArray.filter((r) => r.status === "Reported" || !r.status));
+          setPickups(
+            reportArray.filter((r) => r.status === "Reported" || !r.status),
+          );
         } else {
           setPickups(reportArray.filter((r) => r.status === "Assigned"));
         }
@@ -150,7 +156,9 @@ export default function Dashboard() {
     } catch (err) {
       console.error("Error fetching reports:", err);
       if (err.response?.status === 403) {
-        setError("Access forbidden: Your account role does not have permission to view these reports.");
+        setError(
+          "Access forbidden: Your account role does not have permission to view these reports.",
+        );
       } else {
         setError("Failed to load waste pickup requests.");
       }
@@ -205,10 +213,14 @@ export default function Dashboard() {
   const handleAcceptPickup = async (reportId) => {
     try {
       await api.put(`/reports/${reportId}/accept`);
-      alert("Pickup task accepted successfully! It has been moved to your Assigned Tasks.");
-      
+      alert(
+        "Pickup task accepted successfully! It has been moved to your Assigned Tasks.",
+      );
+
       // Update local state immediately to clear from available list
-      setPickups((prev) => prev.filter((p) => getMongoId(p._id || p.id) !== reportId));
+      setPickups((prev) =>
+        prev.filter((p) => getMongoId(p._id || p.id) !== reportId),
+      );
     } catch (err) {
       alert(err.response?.data?.message || "Failed to accept pickup task.");
     }
@@ -219,7 +231,7 @@ export default function Dashboard() {
     if (!reportId) return;
 
     const confirmCancel = window.confirm(
-      "Are you sure you want to cancel this pickup request?"
+      "Are you sure you want to cancel this pickup request?",
     );
     if (!confirmCancel) return;
 
@@ -230,7 +242,7 @@ export default function Dashboard() {
     } catch (err) {
       alert(
         err.response?.data?.message ||
-          "Failed to cancel pickup. Requests are locked within 4 hours of pickup time."
+          "Failed to cancel pickup. Requests are locked within 4 hours of pickup time.",
       );
     }
   };
@@ -261,7 +273,7 @@ export default function Dashboard() {
         parseInt(month) - 1,
         parseInt(day),
         parseInt(hours),
-        parseInt(minutes)
+        parseInt(minutes),
       );
 
       const formattedTimeString = combinedDateTime.toLocaleTimeString("en-US", {
@@ -270,12 +282,17 @@ export default function Dashboard() {
         hour12: true,
       });
 
-      const response = await api.put(`/reports/${selectedReportId}/reschedule`, {
-        newDate: combinedDateTime.toISOString(),
-        pickupTime: formattedTimeString,
-      });
+      const response = await api.put(
+        `/reports/${selectedReportId}/reschedule`,
+        {
+          newDate: combinedDateTime.toISOString(),
+          pickupTime: formattedTimeString,
+        },
+      );
 
-      alert(response.data?.message || "Pickup request rescheduled successfully!");
+      alert(
+        response.data?.message || "Pickup request rescheduled successfully!",
+      );
       setIsRescheduleOpen(false);
       setSelectedReportId(null);
       fetchReports();
@@ -293,27 +310,53 @@ export default function Dashboard() {
         <div className="flex items-center space-x-10">
           <h1 className="text-2xl font-bold text-emerald-700">PorishkarBD</h1>
           <nav className="hidden md:flex items-center space-x-6 text-sm font-medium text-gray-600">
-            <a href="#" className="text-gray-900 font-semibold border-b-2 border-emerald-600 pb-1">
+            <a
+              href="#"
+              className="text-gray-900 font-semibold border-b-2 border-emerald-600 pb-1"
+            >
               Portal Home
             </a>
-            <a href="#" className="hover:text-emerald-700 transition">My Requests</a>
-            <a href="#" className="hover:text-emerald-700 transition">Report Issues</a>
-            <a href="#" className="hover:text-emerald-700 transition">Messages</a>
+            <a href="#" className="hover:text-emerald-700 transition">
+              My Requests
+            </a>
+            <a href="#" className="hover:text-emerald-700 transition">
+              Report Issues
+            </a>
+            <a href="#" className="hover:text-emerald-700 transition">
+              Messages
+            </a>
           </nav>
         </div>
 
         <div className="flex items-center space-x-4">
-          <button className="text-xl p-2 rounded-full hover:bg-gray-100 transition" title="Notifications">
+          <button
+            className="text-xl p-2 rounded-full hover:bg-gray-100 transition"
+            title="Notifications"
+          >
             🔔
           </button>
 
           {!isCollector && (
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="bg-emerald-700 hover:bg-emerald-800 text-white font-medium px-5 py-2.5 rounded-lg text-sm shadow-xs transition cursor-pointer"
-            >
-              + Request Pickup
-            </button>
+            <>
+              <button
+                onClick={() => navigate("/report")}
+                className="bg-white border border-emerald-600 text-emerald-700 hover:bg-emerald-50 font-medium px-5 py-2.5 rounded-lg text-sm shadow-xs transition cursor-pointer"
+              >
+                🗑️ Report an Issue
+              </button>
+              <button
+                onClick={() => navigate("/my-reports")}
+                className="bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 font-medium px-5 py-2.5 rounded-lg text-sm shadow-xs transition cursor-pointer"
+              >
+                📋 My Reports
+              </button>
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="bg-emerald-700 hover:bg-emerald-800 text-white font-medium px-5 py-2.5 rounded-lg text-sm shadow-xs transition cursor-pointer"
+              >
+                + Request Pickup
+              </button>
+            </>
           )}
 
           <button
@@ -435,7 +478,9 @@ export default function Dashboard() {
                   <option value="industrial">Industrial</option>
                   <option value="medical">Medical</option>
                   <option value="construction">Construction</option>
-                  <option value="water body pollution">Water Body Pollution</option>
+                  <option value="water body pollution">
+                    Water Body Pollution
+                  </option>
                 </select>
               </div>
             </div>
@@ -448,7 +493,9 @@ export default function Dashboard() {
                 Loading pickup records from database...
               </div>
             ) : error ? (
-              <div className="text-center py-12 text-red-600 font-medium">{error}</div>
+              <div className="text-center py-12 text-red-600 font-medium">
+                {error}
+              </div>
             ) : filteredPickups.length === 0 ? (
               <div className="text-center py-12 bg-white rounded-2xl border border-gray-100 text-gray-500">
                 {isCollector
@@ -478,7 +525,7 @@ export default function Dashboard() {
                       <div className="bg-[#eaf5ed] p-4 rounded-xl space-y-1">
                         <span
                           className={`text-xs font-semibold px-2.5 py-1 rounded-md inline-block mb-1 ${getStatusBg(
-                            item.status
+                            item.status,
                           )}`}
                         >
                           {item.status || "Reported"}
@@ -503,17 +550,28 @@ export default function Dashboard() {
                           <strong>Type:</strong> {item.category}
                         </p>
                         <p className="text-xs text-gray-600 truncate">
-                          <strong>Location:</strong> {item.location?.address || "Address not specified"}
+                          <strong>Location:</strong>{" "}
+                          {item.location?.address || "Address not specified"}
                         </p>
 
                         {/* Display Reporter Details for Collectors in Assigned Tab */}
-                        {isCollector && activeTab === "assigned" && item.reportedBy && (
-                          <div className="mt-3 p-2 bg-emerald-50 rounded-lg border border-emerald-100 text-xs space-y-0.5">
-                            <p className="font-bold text-emerald-900">👤 Reporter Details:</p>
-                            <p className="text-gray-700"><strong>Name:</strong> {item.reportedBy.name || "N/A"}</p>
-                            <p className="text-gray-700"><strong>Phone:</strong> {item.reportedBy.phone || "N/A"}</p>
-                          </div>
-                        )}
+                        {isCollector &&
+                          activeTab === "assigned" &&
+                          item.reportedBy && (
+                            <div className="mt-3 p-2 bg-emerald-50 rounded-lg border border-emerald-100 text-xs space-y-0.5">
+                              <p className="font-bold text-emerald-900">
+                                👤 Reporter Details:
+                              </p>
+                              <p className="text-gray-700">
+                                <strong>Name:</strong>{" "}
+                                {item.reportedBy.name || "N/A"}
+                              </p>
+                              <p className="text-gray-700">
+                                <strong>Phone:</strong>{" "}
+                                {item.reportedBy.phone || "N/A"}
+                              </p>
+                            </div>
+                          )}
                       </div>
 
                       {/* Action Buttons */}
