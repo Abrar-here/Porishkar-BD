@@ -106,7 +106,6 @@ export const createReport = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-
 // @desc    Get all reports by the logged-in citizen
 // @route   GET /api/reports/my
 // @access  Private (citizen only)
