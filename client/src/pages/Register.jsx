@@ -30,7 +30,15 @@ function Register() {
       setSuccess(data.message + " You can now log in.");
       setTimeout(() => navigate("/login"), 1500);
     } catch (err) {
-      setError(err.response?.data?.message || "Registration failed");
+      // 1. Log the full error to the browser console for debugging
+      console.log("Registration Error details:", err.response);
+
+      // 2. Extract error message or default to generic
+      setError(
+        err.response?.data?.message || 
+        err.response?.data?.error || 
+        "Registration failed. Please check inputs or network connection."
+      );
     } finally {
       setSubmitting(false);
     }

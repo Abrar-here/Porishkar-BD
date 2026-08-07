@@ -9,6 +9,12 @@ const wasteReportSchema = new mongoose.Schema(
       required: true,
     },
 
+    assignedCollector: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
     // The waste category — matches the requirement's fixed list
     category: {
       type: String,
@@ -40,6 +46,18 @@ const wasteReportSchema = new mongoose.Schema(
       },
     },
 
+    // Scheduled Pickup Date & Time
+    pickupDate: {
+      type: Date,
+      required: [true, "Pickup date is required"],
+    },
+
+    pickupTime: {
+      type: String,
+      required: [true, "Pickup time is required"],
+      trim: true,
+    },
+
     // Photo URLs (Cloudinary fills these later; up to 5)
     images: {
       type: [String],
@@ -66,13 +84,14 @@ const wasteReportSchema = new mongoose.Schema(
         "Cleanup In Progress",
         "Resolved",
         "Closed",
+        "Cancelled",
       ],
       default: "Reported",
     },
   },
   {
     timestamps: true, // createdAt is the submission timestamp (requirement #6)
-  },
+  }
 );
 
 const WasteReport = mongoose.model("WasteReport", wasteReportSchema);

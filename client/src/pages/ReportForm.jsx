@@ -42,6 +42,7 @@ function ReportForm() {
     setSubmitting(true);
     try {
       const formData = new FormData();
+      formData.append("pickupDate", new Date().toISOString());
       formData.append("category", form.category);
       formData.append("description", form.description);
       formData.append("location", JSON.stringify(form.location));
