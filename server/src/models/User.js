@@ -36,6 +36,18 @@ const userSchema = new mongoose.Schema(
       enum: ["active", "pending", "suspended", "banned"],
       default: "active",
     },
+    phoneVerified: {
+      type: Boolean,
+      default: false,
+    },
+    otp: {
+      type: String,
+      select: false, // never return this in normal queries, same pattern as password
+    },
+    otpExpiresAt: {
+      type: Date,
+      select: false,
+    },
   },
   {
     timestamps: true,

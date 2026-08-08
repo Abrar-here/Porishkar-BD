@@ -15,6 +15,7 @@ function MyReports() {
   const navigate = useNavigate();
   const location = useLocation();
   const newReference = location.state?.caseReference;
+  const smsPreview = location.state?.smsPreview;
 
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -55,6 +56,14 @@ function MyReports() {
             <p className="text-green-600 text-sm mt-1">
               Case reference: <span className="font-bold">{newReference}</span>
             </p>
+            {smsPreview && (
+              <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-xs text-yellow-700 font-medium mb-1">
+                  📱 Demo mode — SMS notification (no live provider connected yet)
+                </p>
+                <p className="text-sm text-yellow-800">{smsPreview}</p>
+              </div>
+            )}
           </div>
         )}
 
