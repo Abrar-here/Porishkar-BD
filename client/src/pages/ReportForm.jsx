@@ -53,7 +53,10 @@ function ReportForm() {
       });
 
       navigate("/my-reports", {
-        state: { caseReference: res.data.report.caseReference },
+        state: {
+          caseReference: res.data.report.caseReference,
+          smsPreview: res.data.smsPreview,
+        },
       });
     } catch (err) {
       setError(err.response?.data?.message || "Failed to submit report");

@@ -12,6 +12,8 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import ReportForm from "./pages/ReportForm";
 import MyReports from "./pages/MyReports";
+import VerifyOtp from "./pages/VerifyOtp";
+import ForgotPassword from "./pages/ForgotPassword";
 
 import Marketplace from "./pages/Marketplace";
 import CreateListing from "./pages/CreateListing";
@@ -75,14 +77,19 @@ function App() {
             : <Register />
         }
       />
-
+      <Route path="/verify-otp" element={<VerifyOtp />} />
       <Route
         path="/login"
-        element={
-          user
-            ? <Navigate to="/dashboard" />
-            : <Login />
-        }
+        element={user ? <Navigate to="/dashboard" /> : <Login />}
+      />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route
+        path="/dashboard"
+        element={user ? <Dashboard /> : <Navigate to="/login" />}
+      />
+      <Route
+        path="/report"
+        element={user ? <ReportForm /> : <Navigate to="/login" />}
       />
 
 
