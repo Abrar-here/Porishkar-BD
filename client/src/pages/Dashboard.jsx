@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
 import RequestPickupModal from "./RequestPickupModal";
 
 const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
 
 export default function Dashboard() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
 
   // Determine user role
   const isCollector =
@@ -16,49 +14,59 @@ export default function Dashboard() {
     user?.role === "Collector" ||
     user?.userType === "collector";
 
-  // Active Tab State for Collector ("available" vs "assigned")
+  // Active Tab State for Collector
   const [activeTab, setActiveTab] = useState("available");
 
-  // State for reports/pickups from MongoDB database
+  // Reports / pickups
   const [pickups, setPickups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Modal States
+  // Request Pickup Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Reschedule Modal States
+  // Reschedule Modal
   const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
   const [selectedReportId, setSelectedReportId] = useState(null);
   const [rescheduleDate, setRescheduleDate] = useState("");
   const [rescheduleTime, setRescheduleTime] = useState("");
   const [rescheduleLoading, setRescheduleLoading] = useState(false);
 
-  // Search & Filter state
+  // Search & Filters
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [wasteTypeFilter, setWasteTypeFilter] = useState("All");
 
-  // Helper: Extract string ID
+  // Extract MongoDB ID
   const getMongoId = (idVal) => {
     if (!idVal) return "";
-    if (typeof idVal === "object" && idVal.$oid) return idVal.$oid;
+
+    if (typeof idVal === "object" && idVal.$oid) {
+      return idVal.$oid;
+    }
+
     return String(idVal);
   };
 
-  // Helper: Safely parse date
+  // Safely parse MongoDB date
   const parseMongoDate = (dateVal) => {
     if (!dateVal) return null;
+
     const rawString =
       typeof dateVal === "object" && dateVal.$date ? dateVal.$date : dateVal;
+
     const parsed = new Date(rawString);
+
     return isNaN(parsed.getTime()) ? null : parsed;
   };
 
-  // Formats date safely
+  // Format date
   const formatDateOnly = (dateVal) => {
     const parsedDate = parseMongoDate(dateVal);
-    if (!parsedDate) return "N/A";
+
+    if (!parsedDate) {
+      return "N/A";
+    }
 
     return parsedDate.toLocaleDateString("en-US", {
       month: "short",
@@ -68,13 +76,18 @@ export default function Dashboard() {
     });
   };
 
-  // Helper: Accurately parses combined date + time and checks if locked (< 4 hours)
+  // Check if request is locked within 4 hours
   const isReportLocked = (item) => {
-    if (!item || !item.pickupDate) return true;
+    if (!item || !item.pickupDate) {
+      return true;
+    }
 
     try {
       const baseDate = parseMongoDate(item.pickupDate || item.createdAt);
-      if (!baseDate) return true;
+
+      if (!baseDate) {
+        return true;
+      }
 
       let hours = 0;
       let minutes = 0;
@@ -83,13 +96,20 @@ export default function Dashboard() {
         const match = item.pickupTime
           .trim()
           .match(/^(\d{1,2}):(\d{2})\s*([AP]M)?$/i);
+
         if (match) {
           hours = parseInt(match[1], 10);
           minutes = parseInt(match[2], 10);
+
           const ampm = match[3] ? match[3].toUpperCase() : null;
 
-          if (ampm === "PM" && hours < 12) hours += 12;
-          if (ampm === "AM" && hours === 12) hours = 0;
+          if (ampm === "PM" && hours < 12) {
+            hours += 12;
+          }
+
+          if (ampm === "AM" && hours === 12) {
+            hours = 0;
+          }
         }
       }
 
@@ -102,13 +122,14 @@ export default function Dashboard() {
       ).getTime();
 
       const now = Date.now();
+
       return exactPickupTime - now < FOUR_HOURS_MS;
     } catch {
       return true;
     }
   };
 
-  // Fetch Reports dynamically based on Role & Tab Selection
+  // Fetch reports based on role
   const fetchReports = async () => {
     try {
       setLoading(true);
@@ -139,9 +160,9 @@ export default function Dashboard() {
       }
 
       const data = response.data.reports || response.data || [];
+
       const reportArray = Array.isArray(data) ? data : [];
 
-      // Logic filtering if generic routes are returned as fallback
       if (isCollector) {
         if (activeTab === "available") {
           setPickups(
@@ -155,6 +176,7 @@ export default function Dashboard() {
       }
     } catch (err) {
       console.error("Error fetching reports:", err);
+
       if (err.response?.status === 403) {
         setError(
           "Access forbidden: Your account role does not have permission to view these reports.",
@@ -171,26 +193,34 @@ export default function Dashboard() {
     fetchReports();
   }, [isCollector, activeTab]);
 
+  // Status color
   const getStatusBg = (status) => {
     switch (status) {
       case "Assigned":
       case "Collector En Route":
       case "Cleanup In Progress":
         return "bg-emerald-800 text-white";
+
       case "Reported":
         return "bg-amber-700 text-white";
+
       case "Resolved":
       case "Closed":
         return "bg-blue-900 text-white";
+
       default:
         return "bg-gray-600 text-white";
     }
   };
 
+  // Filter requests
   const filteredPickups = pickups.filter((item) => {
     const rawId = getMongoId(item._id || item.id);
+
     const ref = item.caseReference || rawId || "";
+
     const category = item.category || "";
+
     const address = item.location?.address || "";
 
     const matchesSearch =
@@ -209,15 +239,15 @@ export default function Dashboard() {
     return matchesSearch && matchesStatus && matchesType;
   });
 
-  // Handler for Collector Accepting a Request
+  // Collector accepts pickup
   const handleAcceptPickup = async (reportId) => {
     try {
       await api.put(`/reports/${reportId}/accept`);
+
       alert(
         "Pickup task accepted successfully! It has been moved to your Assigned Tasks.",
       );
 
-      // Update local state immediately to clear from available list
       setPickups((prev) =>
         prev.filter((p) => getMongoId(p._id || p.id) !== reportId),
       );
@@ -226,18 +256,25 @@ export default function Dashboard() {
     }
   };
 
-  // Handler: Cancel Request (Citizen Only)
+  // Citizen cancels request
   const handleCancel = async (reportId) => {
-    if (!reportId) return;
+    if (!reportId) {
+      return;
+    }
 
     const confirmCancel = window.confirm(
       "Are you sure you want to cancel this pickup request?",
     );
-    if (!confirmCancel) return;
+
+    if (!confirmCancel) {
+      return;
+    }
 
     try {
       const response = await api.put(`/reports/${reportId}/cancel`);
+
       alert(response.data?.message || "Pickup request canceled successfully!");
+
       fetchReports();
     } catch (err) {
       alert(
@@ -247,7 +284,7 @@ export default function Dashboard() {
     }
   };
 
-  // Open Reschedule Modal
+  // Open reschedule modal
   const openRescheduleModal = (reportId) => {
     setSelectedReportId(reportId);
     setRescheduleDate("");
@@ -255,9 +292,10 @@ export default function Dashboard() {
     setIsRescheduleOpen(true);
   };
 
-  // Submit Reschedule Form
+  // Submit reschedule
   const handleRescheduleSubmit = async (e) => {
     e.preventDefault();
+
     if (!selectedReportId || !rescheduleDate || !rescheduleTime) {
       alert("Please select both a date and time.");
       return;
@@ -265,7 +303,9 @@ export default function Dashboard() {
 
     try {
       setRescheduleLoading(true);
+
       const [year, month, day] = rescheduleDate.split("-");
+
       const [hours, minutes] = rescheduleTime.split(":");
 
       const combinedDateTime = new Date(
@@ -286,6 +326,7 @@ export default function Dashboard() {
         `/reports/${selectedReportId}/reschedule`,
         {
           newDate: combinedDateTime.toISOString(),
+
           pickupTime: formattedTimeString,
         },
       );
@@ -293,8 +334,10 @@ export default function Dashboard() {
       alert(
         response.data?.message || "Pickup request rescheduled successfully!",
       );
+
       setIsRescheduleOpen(false);
       setSelectedReportId(null);
+
       fetchReports();
     } catch (err) {
       alert(err.response?.data?.message || "Failed to reschedule pickup.");
@@ -305,69 +348,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-[#f7faf7] text-gray-800">
-      {/* Header Bar */}
-      <header className="bg-white border-b border-gray-100 px-8 py-4 flex items-center justify-between sticky top-0 z-10 shadow-xs">
-        <div className="flex items-center space-x-10">
-          <h1 className="text-2xl font-bold text-emerald-700">PorishkarBD</h1>
-          <nav className="hidden md:flex items-center space-x-6 text-sm font-medium text-gray-600">
-            <a
-              href="#"
-              className="text-gray-900 font-semibold border-b-2 border-emerald-600 pb-1"
-            >
-              Portal Home
-            </a>
-            <a href="#" className="hover:text-emerald-700 transition">
-              My Requests
-            </a>
-            <a href="#" className="hover:text-emerald-700 transition">
-              Report Issues
-            </a>
-            <a href="#" className="hover:text-emerald-700 transition">
-              Messages
-            </a>
-          </nav>
-        </div>
-
-        <div className="flex items-center space-x-4">
-          <button
-            className="text-xl p-2 rounded-full hover:bg-gray-100 transition"
-            title="Notifications"
-          >
-            🔔
-          </button>
-
-          {!isCollector && (
-            <>
-              <button
-                onClick={() => navigate("/report")}
-                className="bg-white border border-emerald-600 text-emerald-700 hover:bg-emerald-50 font-medium px-5 py-2.5 rounded-lg text-sm shadow-xs transition cursor-pointer"
-              >
-                🗑️ Report an Issue
-              </button>
-              <button
-                onClick={() => navigate("/my-reports")}
-                className="bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 font-medium px-5 py-2.5 rounded-lg text-sm shadow-xs transition cursor-pointer"
-              >
-                📋 My Reports
-              </button>
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="bg-emerald-700 hover:bg-emerald-800 text-white font-medium px-5 py-2.5 rounded-lg text-sm shadow-xs transition cursor-pointer"
-              >
-                + Request Pickup
-              </button>
-            </>
-          )}
-
-          <button
-            onClick={logout}
-            className="text-sm font-medium text-red-600 hover:bg-red-50 border border-red-200 px-3 py-2 rounded-lg transition cursor-pointer"
-          >
-            Log Out
-          </button>
-        </div>
-      </header>
-
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
         {/* Banner */}
@@ -380,6 +360,7 @@ export default function Dashboard() {
                   : "My Assigned Tasks List"
                 : "Manage your Household Waste Pickups"}
             </h2>
+
             <p className="text-gray-600 font-medium">
               {isCollector
                 ? activeTab === "available"
@@ -387,19 +368,32 @@ export default function Dashboard() {
                   : "View and manage all the pickup jobs assigned to you."
                 : "Discover Household: Household Waste Management"}
             </p>
+
+            {/* Request Pickup Button */}
+            {!isCollector && (
+              <div className="pt-4">
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="bg-emerald-700 hover:bg-emerald-800 text-white font-medium px-5 py-2.5 rounded-lg text-sm shadow-xs transition cursor-pointer"
+                >
+                  + Request Pickup
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="mt-6 md:mt-0 flex flex-col items-center text-center space-y-2 bg-white/40 backdrop-blur-xs p-4 rounded-2xl border border-emerald-100">
             <div className="w-12 h-12 bg-emerald-200/60 text-emerald-800 rounded-full flex items-center justify-center text-xl font-bold">
               ♻️
             </div>
+
             <p className="text-xs text-emerald-900 max-w-[180px] font-medium leading-tight">
               Transparent price discovery without informal middlemen
             </p>
           </div>
         </section>
 
-        {/* Collector Tab Switcher (Placed directly below banner) */}
+        {/* Collector Tabs */}
         {isCollector && (
           <div className="flex items-center space-x-3 border-b border-gray-200 pb-2">
             <button
@@ -412,6 +406,7 @@ export default function Dashboard() {
             >
               📋 Available Tasks
             </button>
+
             <button
               onClick={() => setActiveTab("assigned")}
               className={`px-5 py-2.5 rounded-xl font-semibold text-sm transition cursor-pointer ${
@@ -425,12 +420,13 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Search Input */}
+        {/* Search */}
         <section>
           <div className="relative max-w-md">
             <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
               🔍
             </span>
+
             <input
               type="text"
               value={searchTerm}
@@ -448,36 +444,48 @@ export default function Dashboard() {
             <h3 className="text-lg font-bold text-gray-900">Filters</h3>
 
             <div className="space-y-4">
+              {/* Status Filter */}
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">
                   Pickup Status
                 </label>
+
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
                   className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 >
                   <option value="All">Select All</option>
+
                   <option value="assigned">Scheduled / Assigned</option>
+
                   <option value="reported">Reported (Pending)</option>
+
                   <option value="resolved">Resolved</option>
                 </select>
               </div>
 
+              {/* Waste Type Filter */}
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">
                   Waste Type
                 </label>
+
                 <select
                   value={wasteTypeFilter}
                   onChange={(e) => setWasteTypeFilter(e.target.value)}
                   className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 >
                   <option value="All">Select All</option>
+
                   <option value="household">Household</option>
+
                   <option value="industrial">Industrial</option>
+
                   <option value="medical">Medical</option>
+
                   <option value="construction">Construction</option>
+
                   <option value="water body pollution">
                     Water Body Pollution
                   </option>
@@ -486,7 +494,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Cards Grid */}
+          {/* Cards */}
           <div className="md:col-span-3">
             {loading ? (
               <div className="text-center py-12 text-gray-500 font-medium">
@@ -508,6 +516,7 @@ export default function Dashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredPickups.map((item) => {
                   const itemId = getMongoId(item._id || item.id);
+
                   const isLocked = isReportLocked(item);
 
                   const isNonModifiableStatus =
@@ -530,31 +539,36 @@ export default function Dashboard() {
                         >
                           {item.status || "Reported"}
                         </span>
+
                         <p className="text-xs text-gray-500 font-medium">
                           Pickup Date & Time
                         </p>
+
                         <p className="text-xl font-black text-gray-900">
                           {formatDateOnly(item.pickupDate || item.createdAt)}
                         </p>
+
                         <p className="text-sm font-bold text-emerald-800">
                           {item.pickupTime || "Time N/A"}
                         </p>
                       </div>
 
-                      {/* Card Details */}
+                      {/* Details */}
                       <div className="space-y-1">
                         <h4 className="text-sm font-bold text-gray-800">
                           ID: {item.caseReference || itemId}
                         </h4>
+
                         <p className="text-xs text-gray-600">
                           <strong>Type:</strong> {item.category}
                         </p>
+
                         <p className="text-xs text-gray-600 truncate">
                           <strong>Location:</strong>{" "}
                           {item.location?.address || "Address not specified"}
                         </p>
 
-                        {/* Display Reporter Details for Collectors in Assigned Tab */}
+                        {/* Reporter details */}
                         {isCollector &&
                           activeTab === "assigned" &&
                           item.reportedBy && (
@@ -562,10 +576,12 @@ export default function Dashboard() {
                               <p className="font-bold text-emerald-900">
                                 👤 Reporter Details:
                               </p>
+
                               <p className="text-gray-700">
                                 <strong>Name:</strong>{" "}
                                 {item.reportedBy.name || "N/A"}
                               </p>
+
                               <p className="text-gray-700">
                                 <strong>Phone:</strong>{" "}
                                 {item.reportedBy.phone || "N/A"}
@@ -574,7 +590,7 @@ export default function Dashboard() {
                           )}
                       </div>
 
-                      {/* Action Buttons */}
+                      {/* Actions */}
                       {isCollector ? (
                         activeTab === "available" ? (
                           <button
@@ -596,6 +612,7 @@ export default function Dashboard() {
                           >
                             Reschedule
                           </button>
+
                           <button
                             onClick={() => handleCancel(itemId)}
                             className="w-1/2 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium text-xs rounded-lg transition cursor-pointer"
@@ -619,14 +636,14 @@ export default function Dashboard() {
         </section>
       </main>
 
-      {/* Pickup Request Modal Popup */}
+      {/* Pickup Request Modal */}
       <RequestPickupModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onRequestSuccess={fetchReports}
       />
 
-      {/* Reschedule Modal Popup */}
+      {/* Reschedule Modal */}
       {isRescheduleOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl space-y-4">
@@ -634,6 +651,7 @@ export default function Dashboard() {
               <h3 className="text-lg font-bold text-gray-900">
                 Reschedule Waste Pickup
               </h3>
+
               <button
                 onClick={() => setIsRescheduleOpen(false)}
                 className="text-gray-400 hover:text-gray-600 text-lg font-bold cursor-pointer"
@@ -648,6 +666,7 @@ export default function Dashboard() {
                   <label className="block text-xs font-semibold text-gray-700 mb-1">
                     New Date
                   </label>
+
                   <input
                     type="date"
                     required
@@ -656,10 +675,12 @@ export default function Dashboard() {
                     className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
+
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">
                     New Time
                   </label>
+
                   <input
                     type="time"
                     required
@@ -669,6 +690,7 @@ export default function Dashboard() {
                   />
                 </div>
               </div>
+
               <p className="text-[11px] text-gray-500">
                 Must be scheduled at least 4 hours in advance.
               </p>
@@ -681,6 +703,7 @@ export default function Dashboard() {
                 >
                   Cancel
                 </button>
+
                 <button
                   type="submit"
                   disabled={rescheduleLoading}
