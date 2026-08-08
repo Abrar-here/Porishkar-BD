@@ -1,78 +1,110 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
 
-  return (
-    <nav className="bg-white border-b border-gray-200 shadow-sm">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+  const isActive = (path) =>
+    location.pathname === path
+      ? "text-green-600 font-semibold border-b-2 border-green-600 pb-0.5"
+      : "text-gray-600 hover:text-green-600 transition-colors";
 
-        {/* Logo */}
+  // Keep ALL routes your teammates built
+  const citizenLinks = [
+    { to: "/dashboard", label: "Dashboard" },
+    { to: "/marketplace", label: "Marketplace" },
+    { to: "/my-listings", label: "My Listings" },
+    { to: "/report", label: "Report Waste" },
+    { to: "/my-reports", label: "My Reports" },
+    { to: "/recycling-centres", label: "Recycling" },
+  ];
+
+  const collectorLinks = [
+    { to: "/dashboard", label: "Dashboard" },
+    { to: "/available-pickups", label: "Available Pickups" },
+    { to: "/my-pickups", label: "My Pickups" },
+  ];
+
+  const recyclingLinks = [
+    { to: "/dashboard", label: "Dashboard" },
+    { to: "/marketplace", label: "Marketplace" },
+    { to: "/my-listings", label: "My Listings" },
+  ];
+
+  const adminLinks = [
+    { to: "/dashboard", label: "Dashboard" },
+    { to: "/admin/reports", label: "All Reports" },
+    { to: "/admin/users", label: "Users" },
+  ];
+
+  const getLinks = () => {
+    switch (user?.role) {
+      case "citizen":
+        return citizenLinks;
+      case "collector":
+        return collectorLinks;
+      case "recycling_company":
+        return recyclingLinks;
+      case "admin":
+        return adminLinks;
+      default:
+        return [];
+    }
+  };
+
+  return (
+    <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
         <Link
           to="/dashboard"
-          className="text-2xl font-bold text-green-600"
+          className="text-xl font-bold text-green-600 shrink-0"
         >
           PorishkarBD
         </Link>
 
-        {/* Menu */}
-        <div className="flex items-center gap-6">
+        <div className="hidden md:flex items-center gap-5">
+          {getLinks().map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className={`text-sm ${isActive(link.to)}`}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
 
-          <Link
-            to="/dashboard"
-            className="text-gray-700 hover:text-green-600"
-          >
-            Dashboard
-          </Link>
-
-          <Link
-            to="/marketplace"
-            className="text-gray-700 hover:text-green-600"
-          >
-            Marketplace
-          </Link>
-
-          <Link
-            to="/my-listings"
-            className="text-gray-700 hover:text-green-600"
-          >
-            My Listings
-          </Link>
-
-          <Link
-            to="/report"
-            className="text-gray-700 hover:text-green-600"
-          >
-            Report Waste
-          </Link>
-
-          <Link
-            to="/my-reports"
-            className="text-gray-700 hover:text-green-600"
-          >
-            My Reports
-          </Link>
-
+        <div className="flex items-center gap-3">
           {user && (
-            <span className="text-sm text-gray-500">
-              {user.name}
-            </span>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                <span className="text-green-700 text-xs font-bold">
+                  {user.name?.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <div className="hidden md:block">
+                <p className="text-xs font-medium text-gray-800 leading-tight">
+                  {user.name}
+                </p>
+                <p className="text-xs text-gray-400 capitalize leading-tight">
+                  {user.role?.replace("_", " ")}
+                </p>
+              </div>
+            </div>
           )}
-
           <button
             onClick={handleLogout}
-            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+            className="px-3 py-1.5 bg-red-50 text-red-600 text-sm rounded-lg hover:bg-red-100 border border-red-100 shrink-0"
           >
             Logout
           </button>
-
         </div>
       </div>
     </nav>
