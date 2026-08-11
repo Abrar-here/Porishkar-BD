@@ -14,6 +14,9 @@ function MyListings() {
         setListings(res.data.listings);
       } catch (err) {
         setError(err.response?.data?.message || "Failed to load your listings");
+        setError(
+          err.response?.data?.message || "Failed to load your listings"
+        );
       } finally {
         setLoading(false);
       }
@@ -25,6 +28,7 @@ function MyListings() {
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this listing?",
+      "Are you sure you want to delete this listing?"
     );
 
     if (!confirmDelete) {
@@ -39,6 +43,14 @@ function MyListings() {
       );
     } catch (err) {
       setError(err.response?.data?.message || "Failed to delete listing");
+        currentListings.filter(
+          (listing) => listing._id !== id
+        )
+      );
+    } catch (err) {
+      setError(
+        err.response?.data?.message || "Failed to delete listing"
+      );
     }
   };
 
@@ -46,6 +58,9 @@ function MyListings() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <p className="text-gray-500">Loading your listings...</p>
+        <p className="text-gray-500">
+          Loading your listings...
+        </p>
       </div>
     );
   }
@@ -57,6 +72,13 @@ function MyListings() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">My Listings</h1>
+
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">
+              My Listings
+            </h1>
 
             <p className="text-gray-500 mt-2">
               Manage all recyclable listings created by you.
@@ -103,6 +125,10 @@ function MyListings() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {listings.map((listing) => (
               <div key={listing._id} className="bg-white rounded-xl shadow p-6">
+              <div
+                key={listing._id}
+                className="bg-white rounded-xl shadow p-6"
+              >
                 <div className="flex justify-between items-center mb-3">
                   <span className="text-green-600 font-medium">
                     {listing.materialType}
@@ -129,11 +155,25 @@ function MyListings() {
 
                   <p>
                     <span className="font-semibold">Condition:</span>{" "}
+                    <span className="font-semibold">
+                      Quantity:
+                    </span>{" "}
+                    {listing.quantity?.value}{" "}
+                    {listing.quantity?.unit}
+                  </p>
+
+                  <p>
+                    <span className="font-semibold">
+                      Condition:
+                    </span>{" "}
                     {listing.condition}
                   </p>
 
                   <p>
                     <span className="font-semibold">Price:</span>{" "}
+                    <span className="font-semibold">
+                      Price:
+                    </span>{" "}
                     {listing.listingType === "Donation"
                       ? "Free / Donation"
                       : `৳${listing.askingPrice}`}
@@ -141,6 +181,7 @@ function MyListings() {
                 </div>
 
                 <div className="grid grid-cols-3 gap-3 mt-6">
+
                   <Link
                     to={`/marketplace/${listing._id}`}
                     className="text-center py-2 border border-green-600 text-green-600 rounded-lg hover:bg-green-50"
@@ -161,14 +202,17 @@ function MyListings() {
                   >
                     Delete
                   </button>
+
                 </div>
               </div>
             ))}
           </div>
         )}
+
       </div>
     </div>
   );
 }
 
+export default MyListings;
 export default MyListings;

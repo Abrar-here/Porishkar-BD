@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import api from "../api/axios";
 
+
 const statusColors = {
   Reported: "bg-blue-100 text-blue-700",
   Assigned: "bg-yellow-100 text-yellow-700",
@@ -11,19 +12,24 @@ const statusColors = {
   Closed: "bg-gray-100 text-gray-700",
 };
 
+
 function MyReports() {
   const navigate = useNavigate();
   const location = useLocation();
   const newReference = location.state?.caseReference;
+  const smsPreview = location.state?.smsPreview;
+
 
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [expanded, setExpanded] = useState({});
 
+
   const toggleExpand = (id) => {
     setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
   };
+
 
   useEffect(() => {
     api
@@ -32,6 +38,7 @@ function MyReports() {
       .catch(() => setError("Failed to load reports"))
       .finally(() => setLoading(false));
   }, []);
+
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -45,6 +52,7 @@ function MyReports() {
         </button>
       </nav>
 
+
       <div className="max-w-3xl mx-auto p-6">
         {/* Success banner — shows when redirected from a new report */}
         {newReference && (
@@ -55,8 +63,17 @@ function MyReports() {
             <p className="text-green-600 text-sm mt-1">
               Case reference: <span className="font-bold">{newReference}</span>
             </p>
+            {smsPreview && (
+              <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-xs text-yellow-700 font-medium mb-1">
+                  📱 Demo mode — SMS notification (no live provider connected yet)
+                </p>
+                <p className="text-sm text-yellow-800">{smsPreview}</p>
+              </div>
+            )}
           </div>
         )}
+
 
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-800">My reports</h2>
@@ -68,13 +85,16 @@ function MyReports() {
           </button>
         </div>
 
+
         {loading && (
           <p className="text-gray-500 text-center py-12">Loading reports…</p>
         )}
 
+
         {error && (
           <div className="p-4 bg-red-50 text-red-700 rounded-lg">{error}</div>
         )}
+
 
         {!loading && !error && reports.length === 0 && (
           <div className="text-center py-16 text-gray-400">
@@ -90,6 +110,7 @@ function MyReports() {
             </p>
           </div>
         )}
+
 
         <div className="space-y-4">
           {reports.map((report) => (
@@ -114,6 +135,7 @@ function MyReports() {
                   {report.status}
                 </span>
               </div>
+
 
               {/* Description with read more / show less */}
               <div className="mb-3">

@@ -1,4 +1,5 @@
 import WasteReport from "../models/WasteReport.js";
+import { sendSms } from "../services/smsService.js";
 
 // 4 hours in milliseconds
 const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
@@ -19,18 +20,29 @@ const isWithinFourHourCutoff = (pickupDate) => {
 /**
  * Helper: generate a unique case reference scoped to the current year
  * Example: PBD-2026-00042
+ *
+ * Uses the highest existing reference number for the year (not a raw count),
+ * so it stays correct even with seeded data, deleted reports, or numbers
+ * that don't perfectly match creation order.
  */
 const generateCaseReference = async () => {
   const year = new Date().getFullYear();
-  const startOfYear = new Date(`${year}-01-01T00:00:00.000Z`);
+  const prefix = `PBD-${year}-`;
 
-  // Count reports created in the current year to avoid global collisions
-  const count = await WasteReport.countDocuments({
-    createdAt: { $gte: startOfYear },
-  });
+  const lastReport = await WasteReport.findOne({
+    caseReference: { $regex: `^${prefix}` },
+  }).sort({ caseReference: -1 });
 
-  const padded = String(count + 1).padStart(5, "0");
-  return `PBD-${year}-${padded}`;
+  let nextNumber = 1;
+  if (lastReport) {
+    const lastNumber = parseInt(lastReport.caseReference.split("-").pop(), 10);
+    if (!isNaN(lastNumber)) {
+      nextNumber = lastNumber + 1;
+    }
+  }
+
+  const padded = String(nextNumber).padStart(5, "0");
+  return `${prefix}${padded}`;
 };
 
 // @desc    Create a new waste report
@@ -74,21 +86,54 @@ export const createReport = async (req, res) => {
     }
 
     const images = req.files ? req.files.map((file) => file.path) : [];
-    const caseReference = await generateCaseReference();
 
-    const report = await WasteReport.create({
-      reportedBy: req.user._id,
-      category,
-      description,
-      location: parsedLocation,
-      images,
-      caseReference,
-      pickupDate: parsedPickupDate,
-      pickupTime: pickupTime, // 👈 Saved as explicit string (e.g., "09:00 AM")
-    });
+    // Retry a few times in the rare case two people submit at the exact
+    // same instant and land on the same generated reference (E11000).
+    let report;
+    let attempts = 0;
+    while (attempts < 3) {
+      try {
+        const caseReference = await generateCaseReference();
+        report = await WasteReport.create({
+          reportedBy: req.user._id,
+          category,
+          description,
+          location: parsedLocation,
+          images,
+          caseReference,
+          pickupDate: parsedPickupDate,
+          pickupTime: pickupTime, // 👈 Saved as explicit string (e.g., "09:00 AM")
+        });
+        break;
+      } catch (createError) {
+        const isDuplicateRef =
+          createError.code === 11000 &&
+          createError.keyPattern?.caseReference;
+        attempts += 1;
+        if (!isDuplicateRef || attempts >= 3) {
+          throw createError;
+        }
+        // otherwise loop again with a freshly generated reference
+      }
+    }
+
+    const caseReference = report.caseReference;
+
+    // Send a booking confirmation SMS. Wrapped separately so an SMS failure
+    // never blocks the booking itself from succeeding.
+    const smsMessage = `Booking confirmed! Your pickup (Ref: ${caseReference}) is scheduled for ${parsedPickupDate.toDateString()} at ${pickupTime}.`;
+    try {
+      await sendSms(req.user.phone, smsMessage);
+    } catch (smsError) {
+      console.error("Booking confirmation SMS failed:", smsError.message);
+    }
 
     res.status(201).json({
       message: "Report submitted successfully",
+      // DEMO-ONLY: surfacing the SMS text in the API response so it can be
+      // shown directly in the UI instead of a real phone. Remove this field
+      // before any real deployment with a live SMS provider.
+      smsPreview: smsMessage,
       report: {
         id: report._id,
         caseReference: report.caseReference,
