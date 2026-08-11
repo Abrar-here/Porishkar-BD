@@ -13,6 +13,7 @@ function MyListings() {
         const res = await api.get("/listings/my");
         setListings(res.data.listings);
       } catch (err) {
+        setError(err.response?.data?.message || "Failed to load your listings");
         setError(
           err.response?.data?.message || "Failed to load your listings"
         );
@@ -26,6 +27,7 @@ function MyListings() {
 
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
+      "Are you sure you want to delete this listing?",
       "Are you sure you want to delete this listing?"
     );
 
@@ -37,6 +39,10 @@ function MyListings() {
       await api.delete(`/listings/${id}`);
 
       setListings((currentListings) =>
+        currentListings.filter((listing) => listing._id !== id),
+      );
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to delete listing");
         currentListings.filter(
           (listing) => listing._id !== id
         )
@@ -51,6 +57,7 @@ function MyListings() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-500">Loading your listings...</p>
         <p className="text-gray-500">
           Loading your listings...
         </p>
@@ -61,6 +68,10 @@ function MyListings() {
   return (
     <div className="min-h-screen bg-gray-50 px-6 py-10">
       <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">My Listings</h1>
 
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -113,6 +124,7 @@ function MyListings() {
         {listings.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {listings.map((listing) => (
+              <div key={listing._id} className="bg-white rounded-xl shadow p-6">
               <div
                 key={listing._id}
                 className="bg-white rounded-xl shadow p-6"
@@ -137,6 +149,12 @@ function MyListings() {
 
                 <div className="mt-4 space-y-2 text-sm text-gray-700">
                   <p>
+                    <span className="font-semibold">Quantity:</span>{" "}
+                    {listing.quantity?.value} {listing.quantity?.unit}
+                  </p>
+
+                  <p>
+                    <span className="font-semibold">Condition:</span>{" "}
                     <span className="font-semibold">
                       Quantity:
                     </span>{" "}
@@ -152,6 +170,7 @@ function MyListings() {
                   </p>
 
                   <p>
+                    <span className="font-semibold">Price:</span>{" "}
                     <span className="font-semibold">
                       Price:
                     </span>{" "}
@@ -195,4 +214,5 @@ function MyListings() {
   );
 }
 
+export default MyListings;
 export default MyListings;

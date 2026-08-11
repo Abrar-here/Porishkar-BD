@@ -20,6 +20,7 @@ function Marketplace() {
         setListings(res.data.listings);
       } catch (err) {
         setError(
+          err.response?.data?.message || "Failed to load marketplace listings",
           err.response?.data?.message ||
             "Failed to load marketplace listings"
         );
@@ -39,6 +40,19 @@ function Marketplace() {
       listing.title?.toLowerCase().includes(searchText) ||
       listing.description?.toLowerCase().includes(searchText) ||
       listing.materialType?.toLowerCase().includes(searchText) ||
+      listing.pickupAddress?.district?.toLowerCase().includes(searchText) ||
+      listing.pickupAddress?.division?.toLowerCase().includes(searchText);
+
+    const matchesMaterial =
+      materialFilter === "All" || listing.materialType === materialFilter;
+
+    const matchesType =
+      typeFilter === "All" || listing.listingType === typeFilter;
+
+    const matchesCondition =
+      conditionFilter === "All" || listing.condition === conditionFilter;
+
+    return matchesSearch && matchesMaterial && matchesType && matchesCondition;
       listing.pickupAddress?.district
         ?.toLowerCase()
         .includes(searchText) ||
@@ -130,6 +144,7 @@ function Marketplace() {
             <option value="Paper">Paper</option>
             <option value="Metal">Metal</option>
             <option value="Glass">Glass</option>
+            <option value="Electronic Waste">Electronic Waste</option>
             <option value="Electronic Waste">
               Electronic Waste
             </option>
@@ -177,6 +192,7 @@ function Marketplace() {
         {/* Loading */}
         {loading && (
           <div className="bg-white rounded-xl shadow p-10 text-center">
+            <p className="text-gray-500">Loading listings...</p>
             <p className="text-gray-500">
               Loading listings...
             </p>
@@ -191,6 +207,17 @@ function Marketplace() {
         )}
 
         {/* No Listings */}
+        {!loading && !error && listings.length === 0 && (
+          <div className="bg-white rounded-xl shadow p-10 text-center">
+            <h2 className="text-2xl font-semibold text-gray-700">
+              No Listings Available
+            </h2>
+
+            <p className="text-gray-500 mt-3">
+              No recyclable materials have been listed yet.
+            </p>
+          </div>
+        )}
         {!loading &&
           !error &&
           listings.length === 0 && (
@@ -272,12 +299,20 @@ function Marketplace() {
 
                   {/* Description */}
                   <p className="text-gray-500 text-sm mb-4">
+                    {listing.description || "No description provided."}
                     {listing.description ||
                       "No description provided."}
                   </p>
 
                   {/* Listing Information */}
                   <div className="space-y-2 text-sm text-gray-700">
+                    <p>
+                      <span className="font-semibold">Quantity:</span>{" "}
+                      {listing.quantity?.value} {listing.quantity?.unit}
+                    </p>
+
+                    <p>
+                      <span className="font-semibold">Condition:</span>{" "}
 
                     <p>
                       <span className="font-semibold">
@@ -295,6 +330,7 @@ function Marketplace() {
                     </p>
 
                     <p>
+                      <span className="font-semibold">Type:</span>{" "}
                       <span className="font-semibold">
                         Type:
                       </span>{" "}
@@ -302,6 +338,7 @@ function Marketplace() {
                     </p>
 
                     <p>
+                      <span className="font-semibold">Location:</span>{" "}
                       <span className="font-semibold">
                         Location:
                       </span>{" "}
@@ -310,6 +347,7 @@ function Marketplace() {
                     </p>
 
                     <p>
+                      <span className="font-semibold">Price:</span>{" "}
                       <span className="font-semibold">
                         Price:
                       </span>{" "}
@@ -327,6 +365,11 @@ function Marketplace() {
                   >
                     View Details
                   </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
                 </div>
               </div>
@@ -340,4 +383,5 @@ function Marketplace() {
   );
 }
 
+export default Marketplace;
 export default Marketplace;
