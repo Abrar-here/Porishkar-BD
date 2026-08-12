@@ -8,7 +8,7 @@ const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
 
 export default function Dashboard() {
   const { user } = useAuth();
-  
+
   // 1. Get search params from URL
   const [searchParams] = useSearchParams();
 
@@ -20,7 +20,7 @@ export default function Dashboard() {
 
   // 2. Local activeTab state initialized from URL param (?tab=available or ?tab=assigned)
   const [activeTab, setActiveTab] = useState(
-    searchParams.get("tab") || "available"
+    searchParams.get("tab") || "available",
   );
 
   // 3. Keep activeTab in sync when top navbar links are clicked
@@ -403,13 +403,12 @@ export default function Dashboard() {
               ♻️
             </div>
 
-            <p className="text-xs text-emerald-900 max-w-[180px] font-medium leading-tight">
+            <p className="text-xs text-emerald-900 max-w-45 font-medium leading-tight">
               Transparent price discovery without informal middlemen
             </p>
           </div>
         </section>
 
-        
         {/* Search */}
         <section>
           <div className="relative max-w-md">
