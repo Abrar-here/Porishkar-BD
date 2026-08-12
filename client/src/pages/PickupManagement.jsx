@@ -280,7 +280,7 @@ export default function PickupManagement() {
             <div className="w-12 h-12 bg-emerald-200/60 text-emerald-800 rounded-full flex items-center justify-center text-xl font-bold">
               ♻️
             </div>
-            <p className="text-xs text-emerald-900 max-w-[180px] font-medium leading-tight">
+            <p className="text-xs text-emerald-900 max-w-45 font-medium leading-tight">
               Transparent price discovery without informal middlemen
             </p>
           </div>
