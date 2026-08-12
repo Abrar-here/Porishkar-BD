@@ -63,12 +63,6 @@ function Login() {
           >
             {submitting ? "Logging in..." : "Log In"}
           </button>
-          <Link
-            to="/forgot-password"
-            className="block text-center text-sm text-green-600 hover:underline"
-          >
-            Forgot password?
-          </Link>
         </div>
 
         <p className="text-center text-gray-500 text-sm mt-6">
