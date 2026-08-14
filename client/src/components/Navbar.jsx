@@ -23,15 +23,15 @@ function Navbar() {
     { to: "/my-listings", label: "My Listings" },
     { to: "/report", label: "Report Waste" },
     { to: "/my-reports", label: "My Reports" },
-    { to: "/recycling-centres", label: "Recycling" },
+    { to: "/recycling-centres", label: "Recycling Centres" },
   ];
 
   // inside Navbar.jsx
 
-const collectorLinks = [
-  { to: "/dashboard?tab=available", label: "Available Pickups" },
-  { to: "/dashboard?tab=assigned", label: "My Pickups" },
-];
+  const collectorLinks = [
+    { to: "/dashboard?tab=available", label: "Available Pickups" },
+    { to: "/dashboard?tab=assigned", label: "My Pickups" },
+  ];
 
   const recyclingLinks = [
     { to: "/dashboard", label: "Dashboard" },
@@ -43,6 +43,7 @@ const collectorLinks = [
     { to: "/dashboard", label: "Dashboard" },
     { to: "/admin/reports", label: "All Reports" },
     { to: "/admin/users", label: "Users" },
+    { to: "/recycling-centres", label: "Recycling Centres" },
   ];
 
   const getLinks = () => {

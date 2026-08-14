@@ -16,7 +16,7 @@ import { upload } from "../config/cloudinary.js";
 
 const router = express.Router();
 
-// F01 — Sakir's waste issue reporting (no pickup date needed)
+// F01 — Abrar's waste issue reporting (no pickup date needed)
 router.post(
   "/",
   protect,
