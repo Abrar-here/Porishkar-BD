@@ -319,3 +319,107 @@ export const getAssignedReports = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+//Maisara : F08 
+// Controller function to complete pickup with proof
+export const completePickupWithProof = async (req, res) => {
+  try {
+    const { reportId } = req.params;
+    const { latitude, longitude } = req.body;
+
+    if (!req.file) {
+      return res.status(400).json({ message: "Proof photo is required to complete the pickup." });
+    }
+
+    const report = await WasteReport.findById(reportId);
+    if (!report) {
+      return res.status(404).json({ message: "Report/Pickup request not found." });
+    }
+
+    // Save proof details
+    report.proofOfCollection = {
+      imageUrl: req.file.path, // Cloudinary secure URL
+      uploadedAt: new Date(),
+      location: {
+        latitude: latitude ? parseFloat(latitude) : null,
+        longitude: longitude ? parseFloat(longitude) : null,
+      },
+    };
+
+    report.status = "Resolved"; // or "Resolved" depending on your app standard
+    await report.save();
+
+    res.status(200).json({
+      message: "Pickup completed successfully with proof of collection.",
+      report,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to upload proof.", error: error.message });
+  }
+};
+
+// 1. Citizen raises dispute within 24h
+export const raiseDispute = async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const report = await WasteReport.findById(req.params.id);
+
+    if (!report) {
+      return res.status(404).json({ message: "Report not found." });
+    }
+
+    if (!report.proofOfCollection?.imageUrl && report.status !== "Completed") {
+      return res.status(400).json({ message: "Cannot dispute a report without completion proof." });
+    }
+
+    // Check 24-hour limit
+    const uploadedAt = new Date(report.proofOfCollection?.uploadedAt || report.updatedAt).getTime();
+    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+
+    if (Date.now() - uploadedAt > TWENTY_FOUR_HOURS) {
+      return res.status(400).json({
+        message: "Dispute window closed. Disputes must be filed within 24 hours of completion.",
+      });
+    }
+
+    report.isDisputed = true;
+    report.status = "Under Investigation"; // Locks the case
+    report.disputeDetails = {
+      reason: reason || "Citizen disputed completion proof.",
+      raisedAt: new Date(),
+      status: "Under Investigation",
+    };
+
+    await report.save();
+    return res.status(200).json({ message: "Dispute submitted successfully.", report });
+  } catch (err) {
+    return res.status(500).json({ message: "Error filing dispute: " + err.message });
+  }
+};
+
+// 2. Admin fetch case details + Collector's Contact Info (F08)
+export const getInvestigationDetails = async (req, res) => {
+  try {
+    const report = await WasteReport.findById(req.params.id)
+      .populate("reportedBy", "name email phone")
+      .populate("assignedCollector", "name email phone");
+
+    if (!report) {
+      return res.status(404).json({ message: "Report not found." });
+    }
+
+    return res.status(200).json({
+      report,
+      proofOfCollection: report.proofOfCollection,
+      collectorInfo: report.assignedCollector
+        ? {
+            name: report.assignedCollector.name,
+            email: report.assignedCollector.email,
+            phone: report.assignedCollector.phone,
+          }
+        : null,
+    });
+  } catch (err) {
+    return res.status(500).json({ message: "Failed to fetch investigation details: " + err.message });
+  }
+};
