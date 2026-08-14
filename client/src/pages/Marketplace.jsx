@@ -20,8 +20,7 @@ function Marketplace() {
         setListings(res.data.listings);
       } catch (err) {
         setError(
-          err.response?.data?.message ||
-            "Failed to load marketplace listings"
+          err.response?.data?.message || "Failed to load marketplace listings",
         );
       } finally {
         setLoading(false);
@@ -39,31 +38,19 @@ function Marketplace() {
       listing.title?.toLowerCase().includes(searchText) ||
       listing.description?.toLowerCase().includes(searchText) ||
       listing.materialType?.toLowerCase().includes(searchText) ||
-      listing.pickupAddress?.district
-        ?.toLowerCase()
-        .includes(searchText) ||
-      listing.pickupAddress?.division
-        ?.toLowerCase()
-        .includes(searchText);
+      listing.pickupAddress?.district?.toLowerCase().includes(searchText) ||
+      listing.pickupAddress?.division?.toLowerCase().includes(searchText);
 
     const matchesMaterial =
-      materialFilter === "All" ||
-      listing.materialType === materialFilter;
+      materialFilter === "All" || listing.materialType === materialFilter;
 
     const matchesType =
-      typeFilter === "All" ||
-      listing.listingType === typeFilter;
+      typeFilter === "All" || listing.listingType === typeFilter;
 
     const matchesCondition =
-      conditionFilter === "All" ||
-      listing.condition === conditionFilter;
+      conditionFilter === "All" || listing.condition === conditionFilter;
 
-    return (
-      matchesSearch &&
-      matchesMaterial &&
-      matchesType &&
-      matchesCondition
-    );
+    return matchesSearch && matchesMaterial && matchesType && matchesCondition;
   });
 
   const clearFilters = () => {
@@ -76,7 +63,6 @@ function Marketplace() {
   return (
     <div className="min-h-screen bg-gray-50 px-6 py-8">
       <div className="max-w-7xl mx-auto">
-
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
@@ -119,7 +105,6 @@ function Marketplace() {
 
         {/* Filters */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-
           <select
             value={materialFilter}
             onChange={(e) => setMaterialFilter(e.target.value)}
@@ -130,9 +115,7 @@ function Marketplace() {
             <option value="Paper">Paper</option>
             <option value="Metal">Metal</option>
             <option value="Glass">Glass</option>
-            <option value="Electronic Waste">
-              Electronic Waste
-            </option>
+            <option value="Electronic Waste">Electronic Waste</option>
             <option value="Textile">Textile</option>
           </select>
 
@@ -164,7 +147,6 @@ function Marketplace() {
           >
             Clear Filters
           </button>
-
         </div>
 
         {/* Result Count */}
@@ -177,9 +159,7 @@ function Marketplace() {
         {/* Loading */}
         {loading && (
           <div className="bg-white rounded-xl shadow p-10 text-center">
-            <p className="text-gray-500">
-              Loading listings...
-            </p>
+            <p className="text-gray-500">Loading listings...</p>
           </div>
         )}
 
@@ -191,19 +171,17 @@ function Marketplace() {
         )}
 
         {/* No Listings */}
-        {!loading &&
-          !error &&
-          listings.length === 0 && (
-            <div className="bg-white rounded-xl shadow p-10 text-center">
-              <h2 className="text-2xl font-semibold text-gray-700">
-                No Listings Available
-              </h2>
+        {!loading && !error && listings.length === 0 && (
+          <div className="bg-white rounded-xl shadow p-10 text-center">
+            <h2 className="text-2xl font-semibold text-gray-700">
+              No Listings Available
+            </h2>
 
-              <p className="text-gray-500 mt-3">
-                No recyclable materials have been listed yet.
-              </p>
-            </div>
-          )}
+            <p className="text-gray-500 mt-3">
+              No recyclable materials have been listed yet.
+            </p>
+          </div>
+        )}
 
         {/* No Matching Results */}
         {!loading &&
@@ -232,13 +210,11 @@ function Marketplace() {
         {/* Listing Cards */}
         {!loading && filteredListings.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
             {filteredListings.map((listing) => (
               <div
                 key={listing._id}
                 className="bg-white rounded-xl shadow overflow-hidden"
               >
-
                 {/* Listing Image */}
                 {listing.images && listing.images.length > 0 ? (
                   <img
@@ -253,7 +229,6 @@ function Marketplace() {
                 )}
 
                 <div className="p-6">
-
                   {/* Material + Status */}
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm font-medium text-green-600">
@@ -272,52 +247,38 @@ function Marketplace() {
 
                   {/* Description */}
                   <p className="text-gray-500 text-sm mb-4">
-                    {listing.description ||
-                      "No description provided."}
+                    {listing.description || "No description provided."}
                   </p>
 
                   {/* Listing Information */}
                   <div className="space-y-2 text-sm text-gray-700">
-
                     <p>
-                      <span className="font-semibold">
-                        Quantity:
-                      </span>{" "}
-                      {listing.quantity?.value}{" "}
-                      {listing.quantity?.unit}
+                      <span className="font-semibold">Quantity:</span>{" "}
+                      {listing.quantity?.value} {listing.quantity?.unit}
                     </p>
 
                     <p>
-                      <span className="font-semibold">
-                        Condition:
-                      </span>{" "}
+                      <span className="font-semibold">Condition:</span>{" "}
                       {listing.condition}
                     </p>
 
                     <p>
-                      <span className="font-semibold">
-                        Type:
-                      </span>{" "}
+                      <span className="font-semibold">Type:</span>{" "}
                       {listing.listingType}
                     </p>
 
                     <p>
-                      <span className="font-semibold">
-                        Location:
-                      </span>{" "}
+                      <span className="font-semibold">Location:</span>{" "}
                       {listing.pickupAddress?.district},{" "}
                       {listing.pickupAddress?.division}
                     </p>
 
                     <p>
-                      <span className="font-semibold">
-                        Price:
-                      </span>{" "}
+                      <span className="font-semibold">Price:</span>{" "}
                       {listing.listingType === "Donation"
                         ? "Free / Donation"
                         : `৳${listing.askingPrice}`}
                     </p>
-
                   </div>
 
                   {/* View Details */}
@@ -327,14 +288,11 @@ function Marketplace() {
                   >
                     View Details
                   </Link>
-
                 </div>
               </div>
             ))}
-
           </div>
         )}
-
       </div>
     </div>
   );

@@ -72,7 +72,7 @@ export default function RequestPickupModal({ isOpen, onClose, onRequestSuccess }
         pickupTime: formattedTimeString,             // 👈 REQUIRED BY BACKEND CONTROLLER
       };
 
-      await api.post("/reports", payload);
+      await api.post("/reports/pickup", payload);
 
       setSubmitting(false);
       onRequestSuccess();
