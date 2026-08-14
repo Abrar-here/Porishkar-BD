@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../api/axios";
 import RequestPickupModal from "./RequestPickupModal";
@@ -8,14 +9,29 @@ const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
 export default function Dashboard() {
   const { user } = useAuth();
 
+  // 1. Get search params from URL
+  const [searchParams] = useSearchParams();
+
   // Determine user role
   const isCollector =
     user?.role === "collector" ||
     user?.role === "Collector" ||
     user?.userType === "collector";
 
-  // Active Tab State for Collector
-  const [activeTab, setActiveTab] = useState("available");
+  // 2. Local activeTab state initialized from URL param (?tab=available or ?tab=assigned)
+  const [activeTab, setActiveTab] = useState(
+    searchParams.get("tab") || "available",
+  );
+
+  // 3. Keep activeTab in sync when top navbar links are clicked
+  useEffect(() => {
+    const tabFromUrl = searchParams.get("tab");
+    if (tabFromUrl) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [searchParams]);
+
+  // ... rest of your original Dashboard code remains completely untouched ...
 
   // Reports / pickups
   const [pickups, setPickups] = useState([]);
@@ -41,10 +57,7 @@ export default function Dashboard() {
   const getMongoId = (idVal) => {
     if (!idVal) return "";
 
-    if (
-      typeof idVal === "object" &&
-      idVal.$oid
-    ) {
+    if (typeof idVal === "object" && idVal.$oid) {
       return idVal.$oid;
     }
 
@@ -56,15 +69,11 @@ export default function Dashboard() {
     if (!dateVal) return null;
 
     const rawString =
-      typeof dateVal === "object" && dateVal.$date
-        ? dateVal.$date
-        : dateVal;
+      typeof dateVal === "object" && dateVal.$date ? dateVal.$date : dateVal;
 
     const parsed = new Date(rawString);
 
-    return isNaN(parsed.getTime())
-      ? null
-      : parsed;
+    return isNaN(parsed.getTime()) ? null : parsed;
   };
 
   // Format date
@@ -75,15 +84,12 @@ export default function Dashboard() {
       return "N/A";
     }
 
-    return parsedDate.toLocaleDateString(
-      "en-US",
-      {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-        timeZone: "UTC",
-      }
-    );
+    return parsedDate.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      timeZone: "UTC",
+    });
   };
 
   // Check if request is locked within 4 hours
@@ -93,9 +99,7 @@ export default function Dashboard() {
     }
 
     try {
-      const baseDate = parseMongoDate(
-        item.pickupDate || item.createdAt
-      );
+      const baseDate = parseMongoDate(item.pickupDate || item.createdAt);
 
       if (!baseDate) {
         return true;
@@ -107,29 +111,19 @@ export default function Dashboard() {
       if (item.pickupTime) {
         const match = item.pickupTime
           .trim()
-          .match(
-            /^(\d{1,2}):(\d{2})\s*([AP]M)?$/i
-          );
+          .match(/^(\d{1,2}):(\d{2})\s*([AP]M)?$/i);
 
         if (match) {
           hours = parseInt(match[1], 10);
           minutes = parseInt(match[2], 10);
 
-          const ampm = match[3]
-            ? match[3].toUpperCase()
-            : null;
+          const ampm = match[3] ? match[3].toUpperCase() : null;
 
-          if (
-            ampm === "PM" &&
-            hours < 12
-          ) {
+          if (ampm === "PM" && hours < 12) {
             hours += 12;
           }
 
-          if (
-            ampm === "AM" &&
-            hours === 12
-          ) {
+          if (ampm === "AM" && hours === 12) {
             hours = 0;
           }
         }
@@ -140,15 +134,12 @@ export default function Dashboard() {
         baseDate.getUTCMonth(),
         baseDate.getUTCDate(),
         hours,
-        minutes
+        minutes,
       ).getTime();
 
       const now = Date.now();
 
-      return (
-        exactPickupTime - now <
-        FOUR_HOURS_MS
-      );
+      return exactPickupTime - now < FOUR_HOURS_MS;
     } catch {
       return true;
     }
@@ -165,81 +156,49 @@ export default function Dashboard() {
       if (isCollector) {
         if (activeTab === "assigned") {
           try {
-            response = await api.get(
-              "/reports/assigned"
-            );
+            response = await api.get("/reports/assigned");
           } catch {
-            response = await api.get(
-              "/reports/my"
-            );
+            response = await api.get("/reports/my");
           }
         } else {
           try {
-            response = await api.get(
-              "/reports/available"
-            );
+            response = await api.get("/reports/available");
           } catch {
-            response = await api.get(
-              "/reports/all"
-            );
+            response = await api.get("/reports/all");
           }
         }
       } else {
         try {
-          response = await api.get(
-            "/reports/my"
-          );
+          response = await api.get("/reports/my");
         } catch {
-          response = await api.get(
-            "/reports/user"
-          );
+          response = await api.get("/reports/user");
         }
       }
 
-      const data =
-        response.data.reports ||
-        response.data ||
-        [];
+      const data = response.data.reports || response.data || [];
 
-      const reportArray =
-        Array.isArray(data)
-          ? data
-          : [];
+      const reportArray = Array.isArray(data) ? data : [];
 
       if (isCollector) {
         if (activeTab === "available") {
           setPickups(
-            reportArray.filter(
-              (r) =>
-                r.status === "Reported" ||
-                !r.status
-            )
+            reportArray.filter((r) => r.status === "Reported" || !r.status),
           );
         } else {
-          setPickups(
-            reportArray.filter(
-              (r) =>
-                r.status === "Assigned"
-            )
-          );
+          setPickups(reportArray.filter((r) => r.status === "Assigned"));
         }
       } else {
         setPickups(reportArray);
       }
     } catch (err) {
-      console.error(
-        "Error fetching reports:",
-        err
-      );
+      console.error("Error fetching reports:", err);
 
       if (err.response?.status === 403) {
         setError(
-          "Access forbidden: Your account role does not have permission to view these reports."
+          "Access forbidden: Your account role does not have permission to view these reports.",
         );
       } else {
-        setError(
-          "Failed to load waste pickup requests."
-        );
+        setError("Failed to load waste pickup requests.");
       }
     } finally {
       setLoading(false);
@@ -271,128 +230,78 @@ export default function Dashboard() {
   };
 
   // Filter requests
-  const filteredPickups = pickups.filter(
-    (item) => {
-      const rawId = getMongoId(
-        item._id || item.id
-      );
+  const filteredPickups = pickups.filter((item) => {
+    const rawId = getMongoId(item._id || item.id);
 
-      const ref =
-        item.caseReference ||
-        rawId ||
-        "";
+    const ref = item.caseReference || rawId || "";
 
-      const category =
-        item.category || "";
+    const category = item.category || "";
 
-      const address =
-        item.location?.address || "";
+    const address = item.location?.address || "";
 
-      const matchesSearch =
-        ref
-          .toLowerCase()
-          .includes(
-            searchTerm.toLowerCase()
-          ) ||
-        category
-          .toLowerCase()
-          .includes(
-            searchTerm.toLowerCase()
-          ) ||
-        address
-          .toLowerCase()
-          .includes(
-            searchTerm.toLowerCase()
-          );
+    const matchesSearch =
+      ref.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      address.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesStatus =
-        statusFilter === "All" ||
-        item.status?.toLowerCase() ===
-          statusFilter.toLowerCase();
+    const matchesStatus =
+      statusFilter === "All" ||
+      item.status?.toLowerCase() === statusFilter.toLowerCase();
 
-      const matchesType =
-        wasteTypeFilter === "All" ||
-        category.toLowerCase() ===
-          wasteTypeFilter.toLowerCase();
+    const matchesType =
+      wasteTypeFilter === "All" ||
+      category.toLowerCase() === wasteTypeFilter.toLowerCase();
 
-      return (
-        matchesSearch &&
-        matchesStatus &&
-        matchesType
-      );
-    }
-  );
+    return matchesSearch && matchesStatus && matchesType;
+  });
 
   // Collector accepts pickup
-  const handleAcceptPickup = async (
-    reportId
-  ) => {
+  const handleAcceptPickup = async (reportId) => {
     try {
-      await api.put(
-        `/reports/${reportId}/accept`
-      );
+      await api.put(`/reports/${reportId}/accept`);
 
       alert(
-        "Pickup task accepted successfully! It has been moved to your Assigned Tasks."
+        "Pickup task accepted successfully! It has been moved to your Assigned Tasks.",
       );
 
       setPickups((prev) =>
-        prev.filter(
-          (p) =>
-            getMongoId(
-              p._id || p.id
-            ) !== reportId
-        )
+        prev.filter((p) => getMongoId(p._id || p.id) !== reportId),
       );
     } catch (err) {
-      alert(
-        err.response?.data?.message ||
-          "Failed to accept pickup task."
-      );
+      alert(err.response?.data?.message || "Failed to accept pickup task.");
     }
   };
 
   // Citizen cancels request
-  const handleCancel = async (
-    reportId
-  ) => {
+  const handleCancel = async (reportId) => {
     if (!reportId) {
       return;
     }
 
-    const confirmCancel =
-      window.confirm(
-        "Are you sure you want to cancel this pickup request?"
-      );
+    const confirmCancel = window.confirm(
+      "Are you sure you want to cancel this pickup request?",
+    );
 
     if (!confirmCancel) {
       return;
     }
 
     try {
-      const response =
-        await api.put(
-          `/reports/${reportId}/cancel`
-        );
+      const response = await api.put(`/reports/${reportId}/cancel`);
 
-      alert(
-        response.data?.message ||
-          "Pickup request canceled successfully!"
-      );
+      alert(response.data?.message || "Pickup request canceled successfully!");
 
       fetchReports();
     } catch (err) {
       alert(
         err.response?.data?.message ||
-          "Failed to cancel pickup. Requests are locked within 4 hours of pickup time."
+          "Failed to cancel pickup. Requests are locked within 4 hours of pickup time.",
       );
     }
   };
 
   // Open reschedule modal
-  const openRescheduleModal = (
-    reportId
-  ) => {
+  const openRescheduleModal = (reportId) => {
     setSelectedReportId(reportId);
     setRescheduleDate("");
     setRescheduleTime("");
@@ -400,65 +309,46 @@ export default function Dashboard() {
   };
 
   // Submit reschedule
-  const handleRescheduleSubmit = async (
-    e
-  ) => {
+  const handleRescheduleSubmit = async (e) => {
     e.preventDefault();
 
-    if (
-      !selectedReportId ||
-      !rescheduleDate ||
-      !rescheduleTime
-    ) {
-      alert(
-        "Please select both a date and time."
-      );
+    if (!selectedReportId || !rescheduleDate || !rescheduleTime) {
+      alert("Please select both a date and time.");
       return;
     }
 
     try {
       setRescheduleLoading(true);
 
-      const [year, month, day] =
-        rescheduleDate.split("-");
+      const [year, month, day] = rescheduleDate.split("-");
 
-      const [hours, minutes] =
-        rescheduleTime.split(":");
+      const [hours, minutes] = rescheduleTime.split(":");
 
-      const combinedDateTime =
-        new Date(
-          parseInt(year),
-          parseInt(month) - 1,
-          parseInt(day),
-          parseInt(hours),
-          parseInt(minutes)
-        );
+      const combinedDateTime = new Date(
+        parseInt(year),
+        parseInt(month) - 1,
+        parseInt(day),
+        parseInt(hours),
+        parseInt(minutes),
+      );
 
-      const formattedTimeString =
-        combinedDateTime.toLocaleTimeString(
-          "en-US",
-          {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: true,
-          }
-        );
+      const formattedTimeString = combinedDateTime.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      });
 
-      const response =
-        await api.put(
-          `/reports/${selectedReportId}/reschedule`,
-          {
-            newDate:
-              combinedDateTime.toISOString(),
+      const response = await api.put(
+        `/reports/${selectedReportId}/reschedule`,
+        {
+          newDate: combinedDateTime.toISOString(),
 
-            pickupTime:
-              formattedTimeString,
-          }
-        );
+          pickupTime: formattedTimeString,
+        },
+      );
 
       alert(
-        response.data?.message ||
-          "Pickup request rescheduled successfully!"
+        response.data?.message || "Pickup request rescheduled successfully!",
       );
 
       setIsRescheduleOpen(false);
@@ -466,10 +356,7 @@ export default function Dashboard() {
 
       fetchReports();
     } catch (err) {
-      alert(
-        err.response?.data?.message ||
-          "Failed to reschedule pickup."
-      );
+      alert(err.response?.data?.message || "Failed to reschedule pickup.");
     } finally {
       setRescheduleLoading(false);
     }
@@ -477,110 +364,54 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-[#f7faf7] text-gray-800">
-
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
-
         {/* Banner */}
         <section className="bg-[#e8f5eb] rounded-3xl p-8 flex flex-col md:flex-row justify-between items-start md:items-center relative shadow-xs">
-
           <div className="space-y-2 max-w-2xl">
-
             <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">
-
               {isCollector
-                ? activeTab ===
-                  "available"
+                ? activeTab === "available"
                   ? "Available Community Pickup Tasks"
                   : "My Assigned Tasks List"
                 : "Manage your Household Waste Pickups"}
-
             </h2>
 
             <p className="text-gray-600 font-medium">
-
               {isCollector
-                ? activeTab ===
-                  "available"
+                ? activeTab === "available"
                   ? "Accept pending pickup requests posted by citizens in your area."
                   : "View and manage all the pickup jobs assigned to you."
                 : "Discover Household: Household Waste Management"}
-
             </p>
 
             {/* Request Pickup Button */}
             {!isCollector && (
               <div className="pt-4">
-
                 <button
-                  onClick={() =>
-                    setIsModalOpen(true)
-                  }
+                  onClick={() => setIsModalOpen(true)}
                   className="bg-emerald-700 hover:bg-emerald-800 text-white font-medium px-5 py-2.5 rounded-lg text-sm shadow-xs transition cursor-pointer"
                 >
                   + Request Pickup
                 </button>
-
               </div>
             )}
-
           </div>
 
           <div className="mt-6 md:mt-0 flex flex-col items-center text-center space-y-2 bg-white/40 backdrop-blur-xs p-4 rounded-2xl border border-emerald-100">
-
             <div className="w-12 h-12 bg-emerald-200/60 text-emerald-800 rounded-full flex items-center justify-center text-xl font-bold">
               ♻️
             </div>
 
-            <p className="text-xs text-emerald-900 max-w-[180px] font-medium leading-tight">
-              Transparent price discovery
-              without informal middlemen
+            <p className="text-xs text-emerald-900 max-w-45 font-medium leading-tight">
+              Transparent price discovery without informal middlemen
             </p>
-
           </div>
-
         </section>
-
-        {/* Collector Tabs */}
-        {isCollector && (
-          <div className="flex items-center space-x-3 border-b border-gray-200 pb-2">
-
-            <button
-              onClick={() =>
-                setActiveTab("available")
-              }
-              className={`px-5 py-2.5 rounded-xl font-semibold text-sm transition cursor-pointer ${
-                activeTab ===
-                "available"
-                  ? "bg-emerald-700 text-white shadow-xs"
-                  : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
-              }`}
-            >
-              📋 Available Tasks
-            </button>
-
-            <button
-              onClick={() =>
-                setActiveTab("assigned")
-              }
-              className={`px-5 py-2.5 rounded-xl font-semibold text-sm transition cursor-pointer ${
-                activeTab ===
-                "assigned"
-                  ? "bg-emerald-700 text-white shadow-xs"
-                  : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
-              }`}
-            >
-              ✅ My Assigned Tasks
-            </button>
-
-          </div>
-        )}
 
         {/* Search */}
         <section>
-
           <div className="relative max-w-md">
-
             <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
               🔍
             </span>
@@ -588,403 +419,239 @@ export default function Dashboard() {
             <input
               type="text"
               value={searchTerm}
-              onChange={(e) =>
-                setSearchTerm(
-                  e.target.value
-                )
-              }
+              onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search pickup address or ID....."
               className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs"
             />
-
           </div>
-
         </section>
 
         {/* Filters & Grid */}
         <section className="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
-
           {/* Sidebar */}
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-5">
-
-            <h3 className="text-lg font-bold text-gray-900">
-              Filters
-            </h3>
+            <h3 className="text-lg font-bold text-gray-900">Filters</h3>
 
             <div className="space-y-4">
-
               {/* Status Filter */}
               <div>
-
                 <label className="block text-xs font-semibold text-gray-600 mb-1">
                   Pickup Status
                 </label>
 
                 <select
                   value={statusFilter}
-                  onChange={(e) =>
-                    setStatusFilter(
-                      e.target.value
-                    )
-                  }
+                  onChange={(e) => setStatusFilter(e.target.value)}
                   className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 >
-                  <option value="All">
-                    Select All
-                  </option>
+                  <option value="All">Select All</option>
 
-                  <option value="assigned">
-                    Scheduled / Assigned
-                  </option>
+                  <option value="assigned">Scheduled / Assigned</option>
 
-                  <option value="reported">
-                    Reported (Pending)
-                  </option>
+                  <option value="reported">Reported (Pending)</option>
 
-                  <option value="resolved">
-                    Resolved
-                  </option>
-
+                  <option value="resolved">Resolved</option>
                 </select>
-
               </div>
 
               {/* Waste Type Filter */}
               <div>
-
                 <label className="block text-xs font-semibold text-gray-600 mb-1">
                   Waste Type
                 </label>
 
                 <select
-                  value={
-                    wasteTypeFilter
-                  }
-                  onChange={(e) =>
-                    setWasteTypeFilter(
-                      e.target.value
-                    )
-                  }
+                  value={wasteTypeFilter}
+                  onChange={(e) => setWasteTypeFilter(e.target.value)}
                   className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 >
+                  <option value="All">Select All</option>
 
-                  <option value="All">
-                    Select All
-                  </option>
+                  <option value="household">Household</option>
 
-                  <option value="household">
-                    Household
-                  </option>
+                  <option value="industrial">Industrial</option>
 
-                  <option value="industrial">
-                    Industrial
-                  </option>
+                  <option value="medical">Medical</option>
 
-                  <option value="medical">
-                    Medical
-                  </option>
-
-                  <option value="construction">
-                    Construction
-                  </option>
+                  <option value="construction">Construction</option>
 
                   <option value="water body pollution">
                     Water Body Pollution
                   </option>
-
                 </select>
-
               </div>
-
             </div>
-
           </div>
 
           {/* Cards */}
           <div className="md:col-span-3">
-
             {loading ? (
-
               <div className="text-center py-12 text-gray-500 font-medium">
                 Loading pickup records from database...
               </div>
-
             ) : error ? (
-
               <div className="text-center py-12 text-red-600 font-medium">
                 {error}
               </div>
-
-            ) : filteredPickups.length ===
-              0 ? (
-
+            ) : filteredPickups.length === 0 ? (
               <div className="text-center py-12 bg-white rounded-2xl border border-gray-100 text-gray-500">
-
                 {isCollector
-                  ? activeTab ===
-                    "available"
+                  ? activeTab === "available"
                     ? "No unassigned pickup requests available right now."
                     : "You do not have any assigned tasks currently."
                   : "No pickup requests found for your account."}
-
               </div>
-
             ) : (
-
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredPickups.map((item) => {
+                  const itemId = getMongoId(item._id || item.id);
 
-                {filteredPickups.map(
-                  (item) => {
+                  const isLocked = isReportLocked(item);
 
-                    const itemId =
-                      getMongoId(
-                        item._id ||
-                          item.id
-                      );
+                  const isNonModifiableStatus =
+                    item.status === "Closed" ||
+                    item.status === "Resolved" ||
+                    item.status === "Completed" ||
+                    item.status === "Cancelled";
 
-                    const isLocked =
-                      isReportLocked(
-                        item
-                      );
+                  return (
+                    <div
+                      key={itemId}
+                      className="bg-white rounded-2xl p-5 border border-gray-100 flex flex-col justify-between space-y-4 shadow-sm"
+                    >
+                      {/* Date Header */}
+                      <div className="bg-[#eaf5ed] p-4 rounded-xl space-y-1">
+                        <span
+                          className={`text-xs font-semibold px-2.5 py-1 rounded-md inline-block mb-1 ${getStatusBg(
+                            item.status,
+                          )}`}
+                        >
+                          {item.status || "Reported"}
+                        </span>
 
-                    const isNonModifiableStatus =
-                      item.status ===
-                        "Closed" ||
-                      item.status ===
-                        "Resolved" ||
-                      item.status ===
-                        "Completed" ||
-                      item.status ===
-                        "Cancelled";
+                        <p className="text-xs text-gray-500 font-medium">
+                          Pickup Date & Time
+                        </p>
 
-                    return (
-                      <div
-                        key={itemId}
-                        className="bg-white rounded-2xl p-5 border border-gray-100 flex flex-col justify-between space-y-4 shadow-sm"
-                      >
+                        <p className="text-xl font-black text-gray-900">
+                          {formatDateOnly(item.pickupDate || item.createdAt)}
+                        </p>
 
-                        {/* Date Header */}
-                        <div className="bg-[#eaf5ed] p-4 rounded-xl space-y-1">
-
-                          <span
-                            className={`text-xs font-semibold px-2.5 py-1 rounded-md inline-block mb-1 ${getStatusBg(
-                              item.status
-                            )}`}
-                          >
-                            {item.status ||
-                              "Reported"}
-                          </span>
-
-                          <p className="text-xs text-gray-500 font-medium">
-                            Pickup Date &
-                            Time
-                          </p>
-
-                          <p className="text-xl font-black text-gray-900">
-                            {formatDateOnly(
-                              item.pickupDate ||
-                                item.createdAt
-                            )}
-                          </p>
-
-                          <p className="text-sm font-bold text-emerald-800">
-                            {item.pickupTime ||
-                              "Time N/A"}
-                          </p>
-
-                        </div>
-
-                        {/* Details */}
-                        <div className="space-y-1">
-
-                          <h4 className="text-sm font-bold text-gray-800">
-                            ID:{" "}
-                            {item.caseReference ||
-                              itemId}
-                          </h4>
-
-                          <p className="text-xs text-gray-600">
-                            <strong>
-                              Type:
-                            </strong>{" "}
-                            {item.category}
-                          </p>
-
-                          <p className="text-xs text-gray-600 truncate">
-                            <strong>
-                              Location:
-                            </strong>{" "}
-                            {item.location
-                              ?.address ||
-                              "Address not specified"}
-                          </p>
-
-                          {/* Reporter details */}
-                          {isCollector &&
-                            activeTab ===
-                              "assigned" &&
-                            item.reportedBy && (
-
-                              <div className="mt-3 p-2 bg-emerald-50 rounded-lg border border-emerald-100 text-xs space-y-0.5">
-
-                                <p className="font-bold text-emerald-900">
-                                  👤 Reporter Details:
-                                </p>
-
-                                <p className="text-gray-700">
-                                  <strong>
-                                    Name:
-                                  </strong>{" "}
-                                  {item
-                                    .reportedBy
-                                    .name ||
-                                    "N/A"}
-                                </p>
-
-                                <p className="text-gray-700">
-                                  <strong>
-                                    Phone:
-                                  </strong>{" "}
-                                  {item
-                                    .reportedBy
-                                    .phone ||
-                                    "N/A"}
-                                </p>
-
-                              </div>
-                            )}
-
-                        </div>
-
-                        {/* Actions */}
-                        {isCollector ? (
-
-                          activeTab ===
-                          "available" ? (
-
-                            <button
-                              onClick={() =>
-                                handleAcceptPickup(
-                                  itemId
-                                )
-                              }
-                              className="w-full py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs rounded-xl shadow-xs transition cursor-pointer"
-                            >
-                              Accept Pickup Task
-                            </button>
-
-                          ) : (
-
-                            <div className="text-center text-xs text-emerald-800 font-semibold py-2 bg-emerald-100 rounded-lg">
-                              ✓ Assigned to You
-                            </div>
-
-                          )
-
-                        ) : !isNonModifiableStatus &&
-                          !isLocked ? (
-
-                          <div className="flex space-x-2 pt-2">
-
-                            <button
-                              onClick={() =>
-                                openRescheduleModal(
-                                  itemId
-                                )
-                              }
-                              className="w-1/2 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs rounded-lg transition cursor-pointer"
-                            >
-                              Reschedule
-                            </button>
-
-                            <button
-                              onClick={() =>
-                                handleCancel(
-                                  itemId
-                                )
-                              }
-                              className="w-1/2 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium text-xs rounded-lg transition cursor-pointer"
-                            >
-                              Cancel
-                            </button>
-
-                          </div>
-
-                        ) : (
-
-                          <div className="text-center text-xs text-gray-500 font-semibold py-2.5 bg-gray-100 rounded-lg border border-gray-200">
-
-                            {isNonModifiableStatus
-                              ? `Request ${item.status}`
-                              : "🔒 Locked (< 4h remaining)"}
-
-                          </div>
-
-                        )}
-
+                        <p className="text-sm font-bold text-emerald-800">
+                          {item.pickupTime || "Time N/A"}
+                        </p>
                       </div>
-                    );
-                  }
-                )}
 
+                      {/* Details */}
+                      <div className="space-y-1">
+                        <h4 className="text-sm font-bold text-gray-800">
+                          ID: {item.caseReference || itemId}
+                        </h4>
+
+                        <p className="text-xs text-gray-600">
+                          <strong>Type:</strong> {item.category}
+                        </p>
+
+                        <p className="text-xs text-gray-600 truncate">
+                          <strong>Location:</strong>{" "}
+                          {item.location?.address || "Address not specified"}
+                        </p>
+
+                        {/* Reporter details */}
+                        {isCollector &&
+                          activeTab === "assigned" &&
+                          item.reportedBy && (
+                            <div className="mt-3 p-2 bg-emerald-50 rounded-lg border border-emerald-100 text-xs space-y-0.5">
+                              <p className="font-bold text-emerald-900">
+                                👤 Reporter Details:
+                              </p>
+
+                              <p className="text-gray-700">
+                                <strong>Name:</strong>{" "}
+                                {item.reportedBy.name || "N/A"}
+                              </p>
+
+                              <p className="text-gray-700">
+                                <strong>Phone:</strong>{" "}
+                                {item.reportedBy.phone || "N/A"}
+                              </p>
+                            </div>
+                          )}
+                      </div>
+
+                      {/* Actions */}
+                      {isCollector ? (
+                        activeTab === "available" ? (
+                          <button
+                            onClick={() => handleAcceptPickup(itemId)}
+                            className="w-full py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs rounded-xl shadow-xs transition cursor-pointer"
+                          >
+                            Accept Pickup Task
+                          </button>
+                        ) : (
+                          <div className="text-center text-xs text-emerald-800 font-semibold py-2 bg-emerald-100 rounded-lg">
+                            ✓ Assigned to You
+                          </div>
+                        )
+                      ) : !isNonModifiableStatus && !isLocked ? (
+                        <div className="flex space-x-2 pt-2">
+                          <button
+                            onClick={() => openRescheduleModal(itemId)}
+                            className="w-1/2 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs rounded-lg transition cursor-pointer"
+                          >
+                            Reschedule
+                          </button>
+
+                          <button
+                            onClick={() => handleCancel(itemId)}
+                            className="w-1/2 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium text-xs rounded-lg transition cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="text-center text-xs text-gray-500 font-semibold py-2.5 bg-gray-100 rounded-lg border border-gray-200">
+                          {isNonModifiableStatus
+                            ? `Request ${item.status}`
+                            : "🔒 Locked (< 4h remaining)"}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-
             )}
-
           </div>
-
         </section>
-
       </main>
 
       {/* Pickup Request Modal */}
       <RequestPickupModal
         isOpen={isModalOpen}
-        onClose={() =>
-          setIsModalOpen(false)
-        }
-        onRequestSuccess={
-          fetchReports
-        }
+        onClose={() => setIsModalOpen(false)}
+        onRequestSuccess={fetchReports}
       />
 
       {/* Reschedule Modal */}
       {isRescheduleOpen && (
-
         <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-
           <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl space-y-4">
-
             <div className="flex justify-between items-center border-b border-gray-100 pb-3">
-
               <h3 className="text-lg font-bold text-gray-900">
                 Reschedule Waste Pickup
               </h3>
 
               <button
-                onClick={() =>
-                  setIsRescheduleOpen(
-                    false
-                  )
-                }
+                onClick={() => setIsRescheduleOpen(false)}
                 className="text-gray-400 hover:text-gray-600 text-lg font-bold cursor-pointer"
               >
                 ✕
               </button>
-
             </div>
 
-            <form
-              onSubmit={
-                handleRescheduleSubmit
-              }
-              className="space-y-4"
-            >
-
+            <form onSubmit={handleRescheduleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-
                 <div>
-
                   <label className="block text-xs font-semibold text-gray-700 mb-1">
                     New Date
                   </label>
@@ -992,21 +659,13 @@ export default function Dashboard() {
                   <input
                     type="date"
                     required
-                    value={
-                      rescheduleDate
-                    }
-                    onChange={(e) =>
-                      setRescheduleDate(
-                        e.target.value
-                      )
-                    }
+                    value={rescheduleDate}
+                    onChange={(e) => setRescheduleDate(e.target.value)}
                     className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
-
                 </div>
 
                 <div>
-
                   <label className="block text-xs font-semibold text-gray-700 mb-1">
                     New Time
                   </label>
@@ -1014,35 +673,21 @@ export default function Dashboard() {
                   <input
                     type="time"
                     required
-                    value={
-                      rescheduleTime
-                    }
-                    onChange={(e) =>
-                      setRescheduleTime(
-                        e.target.value
-                      )
-                    }
+                    value={rescheduleTime}
+                    onChange={(e) => setRescheduleTime(e.target.value)}
                     className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
-
                 </div>
-
               </div>
 
               <p className="text-[11px] text-gray-500">
-                Must be scheduled at least
-                4 hours in advance.
+                Must be scheduled at least 4 hours in advance.
               </p>
 
               <div className="flex justify-end space-x-3 pt-2">
-
                 <button
                   type="button"
-                  onClick={() =>
-                    setIsRescheduleOpen(
-                      false
-                    )
-                  }
+                  onClick={() => setIsRescheduleOpen(false)}
                   className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-lg transition cursor-pointer"
                 >
                   Cancel
@@ -1050,26 +695,16 @@ export default function Dashboard() {
 
                 <button
                   type="submit"
-                  disabled={
-                    rescheduleLoading
-                  }
+                  disabled={rescheduleLoading}
                   className="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold rounded-lg shadow-xs transition disabled:opacity-50 cursor-pointer"
                 >
-                  {rescheduleLoading
-                    ? "Rescheduling..."
-                    : "Confirm Reschedule"}
+                  {rescheduleLoading ? "Rescheduling..." : "Confirm Reschedule"}
                 </button>
-
               </div>
-
             </form>
-
           </div>
-
         </div>
-
       )}
-
     </div>
   );
 }
