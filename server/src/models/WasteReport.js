@@ -69,13 +69,36 @@ const wasteReportSchema = new mongoose.Schema(
         "Resolved",
         "Closed",
         "Cancelled",
+        "Under Investigation",
       ],
       default: "Reported",
     },
+    // F08 proof of collection (maisara) - Moved INSIDE schema fields block
+    proofOfCollection: {
+      imageUrl: { type: String, default: null },
+      uploadedAt: { type: Date, default: null },
+      location: {
+        latitude: { type: Number, default: null },
+        longitude: { type: Number, default: null },
+      },
+    },
+    isDisputed: {
+  type: Boolean,
+  default: false,
+},
+disputeDetails: {
+  reason: { type: String, default: "" },
+  raisedAt: { type: Date, default: null },
+  status: {
+    type: String,
+    enum: ["Pending", "Under Investigation", "Resolved", "Dismissed"],
+    default: "Pending",
+  },
+},
   },
   {
     timestamps: true,
-  },
+  }
 );
 
 const WasteReport = mongoose.model("WasteReport", wasteReportSchema);
