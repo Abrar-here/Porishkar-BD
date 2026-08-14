@@ -13,8 +13,7 @@ export default function Dashboard() {
   // 1. Get search params from URL
   const [searchParams] = useSearchParams();
 
-  // 1. Get search params from URL
-  const [searchParams] = useSearchParams();
+  
 
   // Determine user role
   const isCollector =
