@@ -24,6 +24,9 @@ function Navbar() {
     { to: "/report", label: "Report Waste" },
     { to: "/my-reports", label: "My Reports" },
     { to: "/recycling-centres", label: "Recycling Centres" },
+    { to: "/eco-points", label: "Eco Points" },
+    { to: "/leaderboard", label: "Leaderboard" },
+    { to: "/achievements", label: "Achievements" },
   ];
 
   // inside Navbar.jsx

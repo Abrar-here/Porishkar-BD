@@ -42,6 +42,27 @@ function MyListings() {
     }
   };
 
+  const handleMarkSold = async (id) => {
+    const confirmSold = window.confirm("Mark this listing as sold? This can't be undone.");
+    if (!confirmSold) return;
+
+    try {
+      const res = await api.patch(`/listings/${id}/sold`);
+      setListings((currentListings) =>
+        currentListings.map((listing) =>
+          listing._id === id ? { ...listing, status: "Sold" } : listing,
+        ),
+      );
+      if (res.data.ecoPoints) {
+        alert(
+          `Listing marked as sold! You earned ${res.data.ecoPoints.pointsEarned} eco points (new balance: ${res.data.ecoPoints.newBalance}).`,
+        );
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to mark listing as sold");
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -140,7 +161,11 @@ function MyListings() {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3 mt-6">
+                <div
+                  className={`grid gap-3 mt-6 ${
+                    listing.status === "Active" ? "grid-cols-2 md:grid-cols-4" : "grid-cols-3"
+                  }`}
+                >
                   <Link
                     to={`/marketplace/${listing._id}`}
                     className="text-center py-2 border border-green-600 text-green-600 rounded-lg hover:bg-green-50"
@@ -154,6 +179,15 @@ function MyListings() {
                   >
                     Edit
                   </Link>
+
+                  {listing.status === "Active" && (
+                    <button
+                      onClick={() => handleMarkSold(listing._id)}
+                      className="py-2 bg-emerald-700 text-white rounded-lg hover:bg-emerald-800"
+                    >
+                      Mark Sold
+                    </button>
+                  )}
 
                   <button
                     onClick={() => handleDelete(listing._id)}

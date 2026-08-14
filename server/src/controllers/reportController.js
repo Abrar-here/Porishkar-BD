@@ -1,5 +1,7 @@
 import WasteReport from "../models/WasteReport.js";
 import Counter from "../models/Counter.js";
+import { sendSms } from "../services/smsService.js";
+import { awardPoints } from "../services/ecoPointsService.js";
 
 const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
 
@@ -84,8 +86,18 @@ export const createReport = async (req, res) => {
       caseReference,
     });
 
+    let ecoPointsResult = null;
+    try {
+      ecoPointsResult = await awardPoints(req.user._id, "report_waste");
+    } catch (pointsError) {
+      console.error("Eco points award failed:", pointsError.message);
+    }
+
     res.status(201).json({
       message: "Report submitted successfully",
+      ecoPoints: ecoPointsResult
+        ? { pointsEarned: ecoPointsResult.activity.points, newBalance: ecoPointsResult.newBalance }
+        : null,
       report: {
         id: report._id,
         caseReference: report.caseReference,
@@ -154,8 +166,26 @@ export const createPickupRequest = async (req, res) => {
       pickupTime,
     });
 
+    const smsMessage = `Booking confirmed! Your pickup (Ref: ${caseReference}) is scheduled for ${parsedPickupDate.toDateString()} at ${pickupTime}.`;
+    try {
+      await sendSms(req.user.phone, smsMessage);
+    } catch (smsError) {
+      console.error("Booking confirmation SMS failed:", smsError.message);
+    }
+
+    let ecoPointsResult = null;
+    try {
+      ecoPointsResult = await awardPoints(req.user._id, "report_waste");
+    } catch (pointsError) {
+      console.error("Eco points award failed:", pointsError.message);
+    }
+
     res.status(201).json({
       message: "Report submitted successfully",
+      smsPreview: smsMessage,
+      ecoPoints: ecoPointsResult
+        ? { pointsEarned: ecoPointsResult.activity.points, newBalance: ecoPointsResult.newBalance }
+        : null,
       report: {
         id: report._id,
         caseReference: report.caseReference,
@@ -349,9 +379,21 @@ export const completePickupWithProof = async (req, res) => {
     report.status = "Resolved"; // or "Resolved" depending on your app standard
     await report.save();
 
+    // Eco points go to the CITIZEN who requested the pickup, not the
+    // collector — the collector is only the one triggering the event.
+    let ecoPointsResult = null;
+    try {
+      ecoPointsResult = await awardPoints(report.reportedBy, "complete_pickup");
+    } catch (pointsError) {
+      console.error("Eco points award failed:", pointsError.message);
+    }
+
     res.status(200).json({
       message: "Pickup completed successfully with proof of collection.",
       report,
+      citizenEcoPoints: ecoPointsResult
+        ? { pointsEarned: ecoPointsResult.activity.points, newBalance: ecoPointsResult.newBalance }
+        : null,
     });
   } catch (error) {
     res.status(500).json({ message: "Failed to upload proof.", error: error.message });

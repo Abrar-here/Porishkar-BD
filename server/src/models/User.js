@@ -36,6 +36,31 @@ const userSchema = new mongoose.Schema(
       enum: ["active", "pending", "suspended", "banned"],
       default: "active",
     },
+    phoneVerified: {
+      type: Boolean,
+      default: false,
+    },
+    otp: {
+      type: String,
+      select: false,
+    },
+    otpExpiresAt: {
+      type: Date,
+      select: false,
+    },
+    // ─── F13/F17/F18: Eco Points / Leaderboard / Badges fields ──────────────
+    ecoPoints: {
+      type: Number,
+      default: 0,
+    },
+    reportStreak: {
+      type: Number,
+      default: 0,
+    },
+    lastReportDate: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,

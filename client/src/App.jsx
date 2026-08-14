@@ -4,9 +4,14 @@ import { useAuth } from "./context/AuthContext";
 
 import Register from "./pages/Register";
 import Login from "./pages/Login";
+import VerifyOtp from "./pages/VerifyOtp";
+import ForgotPassword from "./pages/ForgotPassword";
 import Dashboard from "./pages/Dashboard";
 import ReportForm from "./pages/ReportForm";
 import MyReports from "./pages/MyReports";
+import EcoPoints from "./pages/EcoPoints";
+import Leaderboard from "./pages/Leaderboard";
+import Achievements from "./pages/Achievements";
 
 import Marketplace from "./pages/Marketplace";
 import CreateListing from "./pages/CreateListing";
@@ -66,6 +71,10 @@ function App() {
         element={user ? <Navigate to="/dashboard" /> : <Login />}
       />
 
+      <Route path="/verify-otp" element={<VerifyOtp />} />
+
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+
       {/* Logged-in Routes */}
       <Route element={<ProtectedLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />
@@ -73,6 +82,12 @@ function App() {
         <Route path="/report" element={<ReportForm />} />
 
         <Route path="/my-reports" element={<MyReports />} />
+
+        <Route path="/eco-points" element={<EcoPoints />} />
+
+        <Route path="/leaderboard" element={<Leaderboard />} />
+
+        <Route path="/achievements" element={<Achievements />} />
 
         {/* F09 Marketplace */}
         <Route path="/marketplace" element={<Marketplace />} />

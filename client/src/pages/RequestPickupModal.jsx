@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import api from "../api/axios";
 
 export default function RequestPickupModal({ isOpen, onClose, onRequestSuccess }) {
@@ -18,6 +18,19 @@ export default function RequestPickupModal({ isOpen, onClose, onRequestSuccess }
   const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [smsPreview, setSmsPreview] = useState("");
+
+  useEffect(() => {
+    if (isOpen) {
+      setPickupDate(getTodayLocalDate());
+      setPickupTime("09:00");
+      setAddress("");
+      setCategory("Household");
+      setDescription("");
+      setError("");
+      setSmsPreview("");
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -72,11 +85,14 @@ export default function RequestPickupModal({ isOpen, onClose, onRequestSuccess }
         pickupTime: formattedTimeString,             // 👈 REQUIRED BY BACKEND CONTROLLER
       };
 
-      await api.post("/reports/pickup", payload);
+      const res = await api.post("/reports/pickup", payload);
 
       setSubmitting(false);
+      setSmsPreview(res.data.smsPreview || "");
       onRequestSuccess();
-      onClose();
+      setTimeout(() => {
+        onClose();
+      }, 3500);
     } catch (err) {
       console.error("Failed to submit pickup request:", err);
       setError(err.response?.data?.message || "Failed to submit request.");
@@ -108,6 +124,13 @@ export default function RequestPickupModal({ isOpen, onClose, onRequestSuccess }
           {error && (
             <div className="mb-4 bg-red-50 text-red-600 text-xs p-3 rounded-lg border border-red-200">
               {error}
+            </div>
+          )}
+
+          {smsPreview && (
+            <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+              <p className="text-xs text-yellow-700 font-medium mb-1">📱 SMS notification</p>
+              <p className="text-sm text-yellow-800">{smsPreview}</p>
             </div>
           )}
 

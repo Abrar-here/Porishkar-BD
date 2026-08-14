@@ -7,16 +7,14 @@ function VerifyOtp() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Phone number is passed in via navigation state from Register.jsx
   const phone = location.state?.phone || "";
 
   const [otp, setOtp] = useState("");
-  const [demoOtp, setDemoOtp] = useState(""); // demo-mode convenience display
+  const [demoOtp, setDemoOtp] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // If someone lands here directly without a phone number, send them back
   useEffect(() => {
     if (!phone) {
       navigate("/register");
@@ -28,14 +26,13 @@ function VerifyOtp() {
     setSuccess("");
     try {
       const data = await sendOtp(phone);
-      setDemoOtp(data.otp || ""); // demo-only: real SMS wouldn't return this
+      setDemoOtp(data.otp || "");
       setSuccess("A verification code has been sent.");
     } catch (err) {
       setError(err.response?.data?.message || "Could not send OTP.");
     }
   };
 
-  // Automatically send an OTP the first time the page loads
   useEffect(() => {
     if (phone) handleSendOtp();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -68,8 +65,7 @@ function VerifyOtp() {
 
         {demoOtp && (
           <div className="mb-4 p-3 bg-yellow-50 text-yellow-800 rounded-lg text-sm">
-            <strong>Demo mode:</strong> since there's no live SMS provider
-            connected yet, your code is shown here — {demoOtp}
+            Your verification code: <strong>{demoOtp}</strong>
           </div>
         )}
 
