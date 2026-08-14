@@ -27,11 +27,8 @@ function Register() {
     setSubmitting(true);
     try {
       const data = await register(form);
-      setSuccess(data.message + " Redirecting to phone verification...");
-      setTimeout(
-        () => navigate("/verify-otp", { state: { phone: form.phone } }),
-        1200,
-      );
+      setSuccess(data.message + " You can now log in.");
+      setTimeout(() => navigate("/login"), 1500);
     } catch (err) {
       // 1. Log the full error to the browser console for debugging
       console.log("Registration Error details:", err.response);
