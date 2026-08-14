@@ -13,6 +13,9 @@ import CreateListing from "./pages/CreateListing";
 import ListingDetails from "./pages/ListingDetails";
 import MyListings from "./pages/MyListings";
 import EditListing from "./pages/EditListing";
+import AddRecyclingCentre from "./pages/AddRecyclingCentre";
+import RecyclingCentres from "./pages/RecyclingCentres";
+import EditRecyclingCentre from "./pages/EditRecyclingCentre";
 
 import Navbar from "./components/Navbar";
 
@@ -81,6 +84,15 @@ function App() {
         <Route path="/my-listings" element={<MyListings />} />
 
         <Route path="/my-listings/:id/edit" element={<EditListing />} />
+
+        <Route path="/recycling-centres" element={<RecyclingCentres />} />
+
+        <Route path="/recycling-centres/add" element={<AddRecyclingCentre />} />
+
+        <Route
+          path="/recycling-centres/:id/edit"
+          element={<EditRecyclingCentre />}
+        />
       </Route>
 
       {/* Wrong URL */}

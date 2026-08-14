@@ -98,7 +98,7 @@ disputeDetails: {
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 const WasteReport = mongoose.model("WasteReport", wasteReportSchema);
