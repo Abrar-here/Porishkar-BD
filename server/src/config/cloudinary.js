@@ -56,3 +56,18 @@ export const marketplaceUpload = multer({
 
 export default cloudinary;
 
+// Maisara's part for F08
+
+const proofStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "collection-proofs",
+    allowed_formats: ["jpg", "jpeg", "png", "webp"],
+    transformation: [{ width: 1200, quality: "auto", crop: "limit" }],
+  },
+});
+
+export const proofUpload = multer({
+  storage: proofStorage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+});
