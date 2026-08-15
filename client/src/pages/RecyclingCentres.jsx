@@ -27,6 +27,7 @@ function RecyclingCentres() {
 
   const [expandedId, setExpandedId] = useState(null);
   const [ratingValue, setRatingValue] = useState(5);
+  const [commentValue, setCommentValue] = useState("");
   const [ratingSubmitting, setRatingSubmitting] = useState(false);
   const [ratingMessage, setRatingMessage] = useState("");
 
@@ -90,6 +91,8 @@ function RecyclingCentres() {
   const toggleExpand = (id) => {
     setExpandedId(expandedId === id ? null : id);
     setRatingMessage("");
+    setCommentValue("");
+    setRatingValue(5);
   };
 
   const submitRating = async (centreId) => {
@@ -98,8 +101,14 @@ function RecyclingCentres() {
     try {
       const res = await api.post(`/centres/${centreId}/rate`, {
         rating: ratingValue,
+        comment: commentValue.trim(),
       });
-      setRatingMessage("Thanks for rating this centre!");
+      setRatingMessage("Thanks for your review!");
+      setCommentValue("");
+
+      // Update the centre's average/count in place, and append the new
+      // review to its reviews array so it shows up immediately without
+      // needing a full re-fetch.
       setCentres((prev) =>
         prev.map((c) =>
           c._id === centreId
@@ -107,6 +116,15 @@ function RecyclingCentres() {
                 ...c,
                 averageRating: res.data.averageRating,
                 totalRatings: res.data.totalRatings,
+                reviews: [
+                  {
+                    rating: ratingValue,
+                    comment: commentValue.trim(),
+                    reviewerName: user?.name || "You",
+                    createdAt: new Date().toISOString(),
+                  },
+                  ...(c.reviews || []),
+                ],
               }
             : c,
         ),
@@ -371,7 +389,7 @@ function RecyclingCentres() {
                       <p className="text-sm font-medium text-gray-700 mb-2">
                         Rate this centre
                       </p>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 mb-2">
                         <select
                           value={ratingValue}
                           onChange={(e) =>
@@ -394,11 +412,53 @@ function RecyclingCentres() {
                           {ratingSubmitting ? "Submitting..." : "Submit rating"}
                         </button>
                       </div>
+                      <textarea
+                        value={commentValue}
+                        onChange={(e) => setCommentValue(e.target.value)}
+                        placeholder="Optional — share what your visit was like (max 500 characters)"
+                        rows={2}
+                        maxLength={500}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-green-500"
+                      />
+                      <p className="text-xs text-gray-400 mt-1 text-right">
+                        {commentValue.length}/500
+                      </p>
                       {ratingMessage && (
-                        <p className="text-sm text-gray-600 mt-2">
+                        <p className="text-sm text-gray-600 mt-1">
                           {ratingMessage}
                         </p>
                       )}
+                    </div>
+                  )}
+
+                  {/* Reviews list — visible to everyone */}
+                  {centre.reviews && centre.reviews.length > 0 && (
+                    <div className="pt-2 border-t border-gray-200">
+                      <p className="text-sm font-medium text-gray-700 mb-2">
+                        Reviews ({centre.totalRatings})
+                      </p>
+                      <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+                        {centre.reviews.map((review, i) => (
+                          <div
+                            key={review._id || i}
+                            className="bg-white rounded-lg p-3 border border-gray-100"
+                          >
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm font-medium text-gray-800">
+                                {review.reviewerName || "Anonymous"}
+                              </p>
+                              <p className="text-xs text-amber-500">
+                                {"⭐".repeat(review.rating)}
+                              </p>
+                            </div>
+                            {review.comment && (
+                              <p className="text-sm text-gray-600 mt-1">
+                                {review.comment}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
 

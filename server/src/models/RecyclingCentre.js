@@ -44,22 +44,37 @@ const recyclingCentreSchema = new mongoose.Schema(
       trim: true,
       default: null,
     },
-    averageRating: {
-      type: Number,
-      default: 0,
-      min: 0,
-      max: 5,
-    },
-    totalRatings: {
-      type: Number,
-      default: 0,
-    },
-    // Tracks which citizens have already rated this centre, so each
-    // person can only rate once. Stores just the user ID — no need
-    // for a full subdocument since we don't display individual ratings.
-    ratedBy: {
-      type: [mongoose.Schema.Types.ObjectId],
-      ref: "User",
+    // Each review is a full record — who left it, their star rating,
+    // an optional written comment, and a snapshot of their name so
+    // display doesn't need a populate on every read. Replaces the old
+    // averageRating/totalRatings/ratedBy trio; those are now computed
+    // live from this array via virtuals below.
+    reviews: {
+      type: [
+        {
+          ratedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+          },
+          rating: {
+            type: Number,
+            min: 1,
+            max: 5,
+            required: true,
+          },
+          comment: {
+            type: String,
+            trim: true,
+            maxlength: 500,
+            default: "",
+          },
+          reviewerName: {
+            type: String,
+            required: true,
+          },
+        },
+      ],
       default: [],
     },
     isActive: {
@@ -71,6 +86,22 @@ const recyclingCentreSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
+
+// Computed live from reviews — never stored, so it can't drift out of
+// sync with the actual review data the way a separately-stored
+// averageRating/totalRatings pair could.
+recyclingCentreSchema.virtual("averageRating").get(function () {
+  if (!this.reviews || this.reviews.length === 0) return 0;
+  const sum = this.reviews.reduce((acc, r) => acc + r.rating, 0);
+  return parseFloat((sum / this.reviews.length).toFixed(1));
+});
+
+recyclingCentreSchema.virtual("totalRatings").get(function () {
+  return this.reviews ? this.reviews.length : 0;
+});
+
+recyclingCentreSchema.set("toJSON", { virtuals: true });
+recyclingCentreSchema.set("toObject", { virtuals: true });
 
 const RecyclingCentre = mongoose.model(
   "RecyclingCentre",
