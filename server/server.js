@@ -1,4 +1,3 @@
-
 import dns from "node:dns";
 import "./src/config/env.js";
 import app from "./src/app.js";
