@@ -106,6 +106,7 @@ function Register() {
             <option value="citizen">Citizen</option>
             <option value="collector">Waste Collector</option>
             <option value="recycling_company">Recycling Company</option>
+            <option value="admin">Admin</option>
           </select>
 
           <button

@@ -20,8 +20,6 @@ export default function RequestPickupModal({ isOpen, onClose, onRequestSuccess }
   const [error, setError] = useState("");
   const [smsPreview, setSmsPreview] = useState("");
 
-  // Reset the form and any leftover SMS/error banners each time the modal
-  // is freshly opened, so a previous submission's data doesn't linger.
   useEffect(() => {
     if (isOpen) {
       setPickupDate(getTodayLocalDate());
@@ -87,13 +85,11 @@ export default function RequestPickupModal({ isOpen, onClose, onRequestSuccess }
         pickupTime: formattedTimeString,             // 👈 REQUIRED BY BACKEND CONTROLLER
       };
 
-      const res = await api.post("/reports", payload);
+      const res = await api.post("/reports/pickup", payload);
 
       setSubmitting(false);
       setSmsPreview(res.data.smsPreview || "");
       onRequestSuccess();
-      // Keep the modal open briefly to show the demo SMS banner instead of
-      // closing immediately — closes automatically after a short delay.
       setTimeout(() => {
         onClose();
       }, 3500);
@@ -133,9 +129,7 @@ export default function RequestPickupModal({ isOpen, onClose, onRequestSuccess }
 
           {smsPreview && (
             <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-              <p className="text-xs text-yellow-700 font-medium mb-1">
-                📱 Demo mode — SMS notification (no live provider connected yet)
-              </p>
+              <p className="text-xs text-yellow-700 font-medium mb-1">📱 SMS notification</p>
               <p className="text-sm text-yellow-800">{smsPreview}</p>
             </div>
           )}

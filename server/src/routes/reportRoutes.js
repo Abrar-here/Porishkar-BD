@@ -1,41 +1,69 @@
 import express from "express";
 import {
   createReport,
+  createPickupRequest,
   getMyReports,
-  getAllReports,
   getReportById,
+  getAllReports,
+  cancelReport,
+  rescheduleReport,
   getAvailableReports,
   acceptReport,
-  rescheduleReport,
-  cancelReport,
   getAssignedReports,
+  raiseDispute,            
+  getInvestigationDetails,
 } from "../controllers/reportController.js";
 import { protect, authorize } from "../middlewares/authMiddleware.js";
 import { upload } from "../config/cloudinary.js";
+import { proofUpload } from "../config/cloudinary.js";
+import { completePickupWithProof } from "../controllers/reportController.js";
 
 const router = express.Router();
 
-// 1. POST Routes
+// F01 — Abrar's waste issue reporting (no pickup date needed)
 router.post(
   "/",
   protect,
   authorize("citizen"),
   upload.array("images", 5),
-  createReport
+  createReport,
 );
 
-// 2. SPECIFIC GET ROUTES (MUST BE BEFORE /:id !!!)
-router.get("/my", protect, getMyReports);
-router.get("/available", protect, authorize("collector"), getAvailableReports); // <--- MUST BE ABOVE /:id
-router.get("/", protect, authorize("admin"), getAllReports);
-router.get("/assigned", protect, authorize("collector"), getAssignedReports);
+// F05 — Friend's pickup scheduling (requires pickup date/time)
+router.post(
+  "/pickup",
+  protect,
+  authorize("citizen"),
+  upload.array("images", 5),
+  createPickupRequest,
+);
 
-// 3. ACTION PUT ROUTES
+//Maisara: F08 Add route for collector to submit proof
+router.patch(
+  "/:reportId/complete",
+  protect,
+  authorize("collector"), // Ensure collector is authenticated
+  proofUpload.single("proofImage"),
+  completePickupWithProof
+);
 router.put("/:id/cancel", protect, authorize("citizen"), cancelReport);
 router.put("/:id/reschedule", protect, authorize("citizen"), rescheduleReport);
+router.get("/available", protect, authorize("collector"), getAvailableReports);
 router.put("/:id/accept", protect, authorize("collector"), acceptReport);
+router.get("/assigned", protect, authorize("collector"), getAssignedReports);
 
-// 4. GENERIC PARAMETER ROUTE (MUST BE AT THE VERY BOTTOM OF GET ROUTES)
-router.get("/:id", protect, getReportById); // <--- MUST BE LAST
+router.post("/:id/dispute", protect, authorize("citizen"),upload.array("image", 5), raiseDispute);
+router.get(
+  "/:id/investigate",
+  protect,
+  authorize("admin"), // <-- Allows Admin to review disputes
+  getInvestigationDetails
+);
+router.get("/", protect, authorize("admin"), getAllReports);
+
+// Shared
+router.get("/my", protect, getMyReports);
+router.get("/", protect, authorize("admin"), getAllReports);
+router.get("/:id", protect, getReportById);
 
 export default router;

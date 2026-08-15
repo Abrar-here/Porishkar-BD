@@ -41,47 +41,29 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
-  // Request an OTP be sent to a phone number (registration verification)
   const sendOtp = async (phone) => {
     const res = await api.post("/auth/send-otp", { phone });
     return res.data;
   };
 
-  // Verify a submitted OTP (registration verification)
   const verifyOtp = async (phone, otp) => {
     const res = await api.post("/auth/verify-otp", { phone, otp });
     return res.data;
   };
 
-  // Request a password reset OTP be sent to a phone number
   const forgotPassword = async (phone) => {
     const res = await api.post("/auth/forgot-password", { phone });
     return res.data;
   };
 
-  // Submit OTP + new password to complete a password reset
   const resetPassword = async (phone, otp, newPassword) => {
-    const res = await api.post("/auth/reset-password", {
-      phone,
-      otp,
-      newPassword,
-    });
+    const res = await api.post("/auth/reset-password", { phone, otp, newPassword });
     return res.data;
   };
 
   return (
     <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        register,
-        login,
-        logout,
-        sendOtp,
-        verifyOtp,
-        forgotPassword,
-        resetPassword,
-      }}
+      value={{ user, loading, register, login, logout, sendOtp, verifyOtp, forgotPassword, resetPassword }}
     >
       {children}
     </AuthContext.Provider>

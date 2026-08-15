@@ -1,60 +1,62 @@
 import WasteReport from "../models/WasteReport.js";
+import Counter from "../models/Counter.js";
 import { sendSms } from "../services/smsService.js";
+import { awardPoints } from "../services/ecoPointsService.js";
 
-// 4 hours in milliseconds
 const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
 
-/**
- * Helper: Checks if the report is locked (less than 4 hours until pickup date)
- * @param {Date|string} pickupDate 
- * @returns {boolean} true if locked (cannot modify), false if eligible
- */
 const isWithinFourHourCutoff = (pickupDate) => {
   if (!pickupDate) return true;
   const pickupTime = new Date(pickupDate).getTime();
   const now = Date.now();
-  // Locked if time remaining is strictly less than 4 hours (or already past)
-  return (pickupTime - now) < FOUR_HOURS_MS;
+  return pickupTime - now < FOUR_HOURS_MS;
 };
 
-/**
- * Helper: generate a unique case reference scoped to the current year
- * Example: PBD-2026-00042
- *
- * Uses the highest existing reference number for the year (not a raw count),
- * so it stays correct even with seeded data, deleted reports, or numbers
- * that don't perfectly match creation order.
- */
+// Atomically increments a per-year counter, so numbers never repeat —
+// even if reports get deleted or two reports are created at the same instant.
 const generateCaseReference = async () => {
   const year = new Date().getFullYear();
-  const prefix = `PBD-${year}-`;
+  const counterId = `caseReference-${year}`;
 
-  const lastReport = await WasteReport.findOne({
-    caseReference: { $regex: `^${prefix}` },
-  }).sort({ caseReference: -1 });
+  let counter = await Counter.findById(counterId);
+  if (!counter) {
+    // First time this counter is used — seed it from the highest existing
+    // caseReference for this year so we don't repeat numbers already in use.
+    const prefix = `PBD-${year}-`;
+    const latest = await WasteReport.findOne({
+      caseReference: { $regex: `^${prefix}` },
+    }).sort({ caseReference: -1 });
 
-  let nextNumber = 1;
-  if (lastReport) {
-    const lastNumber = parseInt(lastReport.caseReference.split("-").pop(), 10);
-    if (!isNaN(lastNumber)) {
-      nextNumber = lastNumber + 1;
-    }
+    const startSeq = latest
+      ? parseInt(latest.caseReference.slice(prefix.length), 10) || 0
+      : 0;
+
+    // Atomic upsert — safe even if two requests race to seed at once.
+    await Counter.findOneAndUpdate(
+      { _id: counterId },
+      { $setOnInsert: { seq: startSeq } },
+      { upsert: true },
+    );
   }
 
-  const padded = String(nextNumber).padStart(5, "0");
-  return `${prefix}${padded}`;
+  counter = await Counter.findOneAndUpdate(
+    { _id: counterId },
+    { $inc: { seq: 1 } },
+    { new: true },
+  );
+
+  const padded = String(counter.seq).padStart(5, "0");
+  return `PBD-${year}-${padded}`;
 };
 
-// @desc    Create a new waste report
-// @route   POST /api/reports
-// @access  Private (citizen only)
+// ─── F01: no pickupDate/pickupTime needed ──────────────────
 export const createReport = async (req, res) => {
   try {
-    const { category, description, location, pickupDate, pickupTime } = req.body;
+    const { category, description, location } = req.body;
 
-    if (!category || !description || !location || !pickupDate || !pickupTime) {
+    if (!category || !description || !location) {
       return res.status(400).json({
-        message: "Category, description, location, pickup date, and pickup time are required.",
+        message: "Category, description, and location are required",
       });
     }
 
@@ -72,13 +74,78 @@ export const createReport = async (req, res) => {
       });
     }
 
-    // Parse and validate the selected pickup date & time
-    const parsedPickupDate = new Date(pickupDate);
-    if (isNaN(parsedPickupDate.getTime())) {
-      return res.status(400).json({ message: "Invalid pickup date format provided." });
+    const images = req.files ? req.files.map((file) => file.path) : [];
+    const caseReference = await generateCaseReference();
+
+    const report = await WasteReport.create({
+      reportedBy: req.user._id,
+      category,
+      description,
+      location: parsedLocation,
+      images,
+      caseReference,
+    });
+
+    let ecoPointsResult = null;
+    try {
+      ecoPointsResult = await awardPoints(req.user._id, "report_waste");
+    } catch (pointsError) {
+      console.error("Eco points award failed:", pointsError.message);
     }
 
-    // Guard: Block creation if the requested slot is inside the 4-hour window
+    res.status(201).json({
+      message: "Report submitted successfully",
+      ecoPoints: ecoPointsResult
+        ? { pointsEarned: ecoPointsResult.activity.points, newBalance: ecoPointsResult.newBalance }
+        : null,
+      report: {
+        id: report._id,
+        caseReference: report.caseReference,
+        category: report.category,
+        description: report.description,
+        location: report.location,
+        images: report.images,
+        status: report.status,
+        createdAt: report.createdAt,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// ─── F05: requires pickupDate/pickupTime ──────────────────
+export const createPickupRequest = async (req, res) => {
+  try {
+    const { category, description, location, pickupDate, pickupTime } =
+      req.body;
+
+    if (!category || !description || !location || !pickupDate || !pickupTime) {
+      return res.status(400).json({
+        message:
+          "Category, description, location, pickup date, and pickup time are required.",
+      });
+    }
+
+    let parsedLocation;
+    try {
+      parsedLocation =
+        typeof location === "string" ? JSON.parse(location) : location;
+    } catch {
+      return res.status(400).json({ message: "Invalid location format" });
+    }
+
+    if (!parsedLocation.lat || !parsedLocation.lng || !parsedLocation.address) {
+      return res.status(400).json({
+        message: "Location must include lat, lng, and address",
+      });
+    }
+
+    const parsedPickupDate = new Date(pickupDate);
+    if (isNaN(parsedPickupDate.getTime())) {
+      return res.status(400).json({ message: "Invalid pickup date format." });
+    }
+
     if (isWithinFourHourCutoff(parsedPickupDate)) {
       return res.status(400).json({
         message: "Pickups must be scheduled at least 4 hours in advance.",
@@ -86,41 +153,19 @@ export const createReport = async (req, res) => {
     }
 
     const images = req.files ? req.files.map((file) => file.path) : [];
+    const caseReference = await generateCaseReference();
 
-    // Retry a few times in the rare case two people submit at the exact
-    // same instant and land on the same generated reference (E11000).
-    let report;
-    let attempts = 0;
-    while (attempts < 3) {
-      try {
-        const caseReference = await generateCaseReference();
-        report = await WasteReport.create({
-          reportedBy: req.user._id,
-          category,
-          description,
-          location: parsedLocation,
-          images,
-          caseReference,
-          pickupDate: parsedPickupDate,
-          pickupTime: pickupTime, // 👈 Saved as explicit string (e.g., "09:00 AM")
-        });
-        break;
-      } catch (createError) {
-        const isDuplicateRef =
-          createError.code === 11000 &&
-          createError.keyPattern?.caseReference;
-        attempts += 1;
-        if (!isDuplicateRef || attempts >= 3) {
-          throw createError;
-        }
-        // otherwise loop again with a freshly generated reference
-      }
-    }
+    const report = await WasteReport.create({
+      reportedBy: req.user._id,
+      category,
+      description,
+      location: parsedLocation,
+      images,
+      caseReference,
+      pickupDate: parsedPickupDate,
+      pickupTime,
+    });
 
-    const caseReference = report.caseReference;
-
-    // Send a booking confirmation SMS. Wrapped separately so an SMS failure
-    // never blocks the booking itself from succeeding.
     const smsMessage = `Booking confirmed! Your pickup (Ref: ${caseReference}) is scheduled for ${parsedPickupDate.toDateString()} at ${pickupTime}.`;
     try {
       await sendSms(req.user.phone, smsMessage);
@@ -128,12 +173,19 @@ export const createReport = async (req, res) => {
       console.error("Booking confirmation SMS failed:", smsError.message);
     }
 
+    let ecoPointsResult = null;
+    try {
+      ecoPointsResult = await awardPoints(req.user._id, "report_waste");
+    } catch (pointsError) {
+      console.error("Eco points award failed:", pointsError.message);
+    }
+
     res.status(201).json({
       message: "Report submitted successfully",
-      // DEMO-ONLY: surfacing the SMS text in the API response so it can be
-      // shown directly in the UI instead of a real phone. Remove this field
-      // before any real deployment with a live SMS provider.
       smsPreview: smsMessage,
+      ecoPoints: ecoPointsResult
+        ? { pointsEarned: ecoPointsResult.activity.points, newBalance: ecoPointsResult.newBalance }
+        : null,
       report: {
         id: report._id,
         caseReference: report.caseReference,
@@ -151,184 +203,49 @@ export const createReport = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-// @desc    Get all reports by the logged-in citizen
-// @route   GET /api/reports/my
-// @access  Private (citizen only)
+
 export const getMyReports = async (req, res) => {
   try {
-    const reports = await WasteReport.find({ reportedBy: req.user._id }).sort({
-      createdAt: -1,
-    });
-
+    const reports = await WasteReport.find({
+      reportedBy: req.user._id,
+    }).sort({ createdAt: -1 });
     res.status(200).json({ reports });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
-// @desc    Get ALL reports (admin only)
-// @route   GET /api/reports
-// @access  Private (admin only)
 export const getAllReports = async (req, res) => {
   try {
     const reports = await WasteReport.find()
       .populate("reportedBy", "name email")
       .sort({ createdAt: -1 });
-
     res.status(200).json({ reports });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
-// @desc    Cancel a pickup request (Must be >= 4 hours before pickup)
-// @route   PUT /api/reports/:id/cancel
-// @access  Private (citizen only)
 export const cancelReport = async (req, res) => {
   try {
     const report = await WasteReport.findById(req.params.id);
-
-    if (!report) {
+    if (!report)
       return res.status(404).json({ message: "Pickup request not found." });
-    }
-
-    if (report.reportedBy.toString() !== req.user._id.toString()) {
+    if (report.reportedBy.toString() !== req.user._id.toString())
       return res.status(403).json({ message: "Unauthorized action." });
-    }
-
-    if (report.status === "Closed" || report.status === "Cancelled" || report.status === "Completed") {
-      return res.status(400).json({ message: `Cannot cancel a report that is already ${report.status.toLowerCase()}.` });
-    }
-
-    if (isWithinFourHourCutoff(report.pickupDate)) {
+    if (["Closed", "Cancelled", "Completed"].includes(report.status))
       return res.status(400).json({
-        message: "Action locked: Bookings can only be canceled up to 4 hours prior to the scheduled pickup window.",
+        message: `Cannot cancel a report that is already ${report.status.toLowerCase()}.`,
       });
-    }
-
+    if (isWithinFourHourCutoff(report.pickupDate))
+      return res.status(400).json({
+        message:
+          "Action locked: Bookings can only be canceled up to 4 hours prior to the scheduled pickup window.",
+      });
     report.status = "Cancelled";
     await report.save();
-
-    res.status(200).json({ message: "Pickup canceled successfully without penalty", report });
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-};
-
-// @desc    Reschedule a pickup request (Must be >= 4 hours before pickup)
-// @route   PUT /api/reports/:id/reschedule
-// @access  Private (citizen only)
-export const rescheduleReport = async (req, res) => {
-  try {
-    const newDate = req.body.newDate || req.body.pickupDate || req.body.scheduledDate;
-    const newTime = req.body.pickupTime || req.body.newTime;
-
-    if (!newDate) {
-      return res.status(400).json({ message: "New pickup date is required." });
-    }
-
-    const report = await WasteReport.findById(req.params.id);
-
-    if (!report) {
-      return res.status(404).json({ message: "Pickup request not found." });
-    }
-
-    if (report.reportedBy.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "Unauthorized action." });
-    }
-
-    if (report.status === "Closed" || report.status === "Cancelled" || report.status === "Completed") {
-      return res.status(400).json({ message: `Cannot reschedule a report that is already ${report.status.toLowerCase()}.` });
-    }
-
-    if (isWithinFourHourCutoff(report.pickupDate)) {
-      return res.status(400).json({
-        message: "Action locked: Bookings can only be rescheduled up to 4 hours prior to the scheduled pickup window.",
-      });
-    }
-
-    if (isWithinFourHourCutoff(newDate)) {
-      return res.status(400).json({
-        message: "Invalid date: The new pickup date must be at least 4 hours from now.",
-      });
-    }
-
-    report.pickupDate = new Date(newDate);
-    if (newTime) {
-      report.pickupTime = newTime; // Update time if provided
-    }
-    
-    await report.save();
-
-    res.status(200).json({ message: "Pickup rescheduled successfully", report });
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-};
-
-// @desc    Get a single report by ID
-// @route   GET /api/reports/:id
-// @access  Private
-export const getReportById = async (req, res) => {
-  try {
-    const report = await WasteReport.findById(req.params.id).populate(
-      "reportedBy",
-      "name email phone"
-    );
-
-    if (!report) {
-      return res.status(404).json({ message: "Report not found" });
-    }
-
-    if (
-      report.reportedBy._id.toString() !== req.user._id.toString() &&
-      req.user.role !== "admin"
-    ) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
-
-    res.status(200).json({ report });
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-};
-
-// @desc    Get all unassigned reported pickups (for Collectors)
-// @route   GET /api/reports/available
-// @access  Private (Collector)
-export const getAvailableReports = async (req, res) => {
-  try {
-    const reports = await WasteReport.find({ status: "Reported" })
-      .populate("reportedBy", "name phone email")
-      .sort({ createdAt: -1 });
-
-    res.status(200).json({ reports });
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-};
-
-// @desc    Collector accepts a pickup request
-// @route   PUT /api/reports/:id/accept
-// @access  Private (Collector)
-export const acceptReport = async (req, res) => {
-  try {
-    const report = await WasteReport.findById(req.params.id);
-
-    if (!report) {
-      return res.status(404).json({ message: "Pickup request not found." });
-    }
-
-    if (report.status !== "Reported") {
-      return res.status(400).json({ message: "This request is no longer available." });
-    }
-
-    report.status = "Assigned";
-    report.assignedCollector = req.user._id;
-    await report.save();
-
     res.status(200).json({
-      message: "Pickup assigned to you successfully!",
+      message: "Pickup canceled successfully without penalty",
       report,
     });
   } catch (error) {
@@ -336,16 +253,215 @@ export const acceptReport = async (req, res) => {
   }
 };
 
-export const getAssignedReports = async (req, res) => {
+export const rescheduleReport = async (req, res) => {
   try {
-    const reports = await WasteReport.find({
-      assignedCollector: req.user._id, // 👈 Matched with acceptReport!
-    })
-      .populate("reportedBy", "name phone email")
-      .sort({ updatedAt: -1 });
+    const newDate =
+      req.body.newDate || req.body.pickupDate || req.body.scheduledDate;
+    const newTime = req.body.pickupTime || req.body.newTime;
+    if (!newDate)
+      return res.status(400).json({ message: "New pickup date is required." });
+    const report = await WasteReport.findById(req.params.id);
+    if (!report)
+      return res.status(404).json({ message: "Pickup request not found." });
+    if (report.reportedBy.toString() !== req.user._id.toString())
+      return res.status(403).json({ message: "Unauthorized action." });
+    if (["Closed", "Cancelled", "Completed"].includes(report.status))
+      return res.status(400).json({
+        message: `Cannot reschedule a report that is already ${report.status.toLowerCase()}.`,
+      });
+    if (isWithinFourHourCutoff(report.pickupDate))
+      return res.status(400).json({
+        message:
+          "Action locked: Bookings can only be rescheduled up to 4 hours prior to the scheduled pickup window.",
+      });
+    if (isWithinFourHourCutoff(newDate))
+      return res.status(400).json({
+        message:
+          "Invalid date: The new pickup date must be at least 4 hours from now.",
+      });
+    report.pickupDate = new Date(newDate);
+    if (newTime) report.pickupTime = newTime;
+    await report.save();
+    res
+      .status(200)
+      .json({ message: "Pickup rescheduled successfully", report });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
 
+export const getReportById = async (req, res) => {
+  try {
+    const report = await WasteReport.findById(req.params.id).populate(
+      "reportedBy",
+      "name email phone",
+    );
+    if (!report) return res.status(404).json({ message: "Report not found" });
+    if (
+      report.reportedBy._id.toString() !== req.user._id.toString() &&
+      req.user.role !== "admin"
+    )
+      return res.status(403).json({ message: "Not authorized" });
+    res.status(200).json({ report });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+export const getAvailableReports = async (req, res) => {
+  try {
+    const reports = await WasteReport.find({ status: "Reported" })
+      .populate("reportedBy", "name phone email")
+      .sort({ createdAt: -1 });
     res.status(200).json({ reports });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+export const acceptReport = async (req, res) => {
+  try {
+    const report = await WasteReport.findById(req.params.id);
+    if (!report)
+      return res.status(404).json({ message: "Pickup request not found." });
+    if (report.status !== "Reported")
+      return res
+        .status(400)
+        .json({ message: "This request is no longer available." });
+    report.status = "Assigned";
+    report.assignedCollector = req.user._id;
+    await report.save();
+    res
+      .status(200)
+      .json({ message: "Pickup assigned to you successfully!", report });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+export const getAssignedReports = async (req, res) => {
+  try {
+    const reports = await WasteReport.find({ assignedCollector: req.user._id })
+      .populate("reportedBy", "name phone email")
+      .sort({ updatedAt: -1 });
+    res.status(200).json({ reports });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+//Maisara : F08 
+// Controller function to complete pickup with proof
+export const completePickupWithProof = async (req, res) => {
+  try {
+    const { reportId } = req.params;
+    const { latitude, longitude } = req.body;
+
+    if (!req.file) {
+      return res.status(400).json({ message: "Proof photo is required to complete the pickup." });
+    }
+
+    const report = await WasteReport.findById(reportId);
+    if (!report) {
+      return res.status(404).json({ message: "Report/Pickup request not found." });
+    }
+
+    // Save proof details
+    report.proofOfCollection = {
+      imageUrl: req.file.path, // Cloudinary secure URL
+      uploadedAt: new Date(),
+      location: {
+        latitude: latitude ? parseFloat(latitude) : null,
+        longitude: longitude ? parseFloat(longitude) : null,
+      },
+    };
+
+    report.status = "Resolved"; // or "Resolved" depending on your app standard
+    await report.save();
+
+    // Eco points go to the CITIZEN who requested the pickup, not the
+    // collector — the collector is only the one triggering the event.
+    let ecoPointsResult = null;
+    try {
+      ecoPointsResult = await awardPoints(report.reportedBy, "complete_pickup");
+    } catch (pointsError) {
+      console.error("Eco points award failed:", pointsError.message);
+    }
+
+    res.status(200).json({
+      message: "Pickup completed successfully with proof of collection.",
+      report,
+      citizenEcoPoints: ecoPointsResult
+        ? { pointsEarned: ecoPointsResult.activity.points, newBalance: ecoPointsResult.newBalance }
+        : null,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to upload proof.", error: error.message });
+  }
+};
+
+// 1. Citizen raises dispute within 24h
+export const raiseDispute = async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const report = await WasteReport.findById(req.params.id);
+
+    if (!report) {
+      return res.status(404).json({ message: "Report not found." });
+    }
+
+    if (!report.proofOfCollection?.imageUrl && report.status !== "Completed") {
+      return res.status(400).json({ message: "Cannot dispute a report without completion proof." });
+    }
+
+    // Check 24-hour limit
+    const uploadedAt = new Date(report.proofOfCollection?.uploadedAt || report.updatedAt).getTime();
+    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+
+    if (Date.now() - uploadedAt > TWENTY_FOUR_HOURS) {
+      return res.status(400).json({
+        message: "Dispute window closed. Disputes must be filed within 24 hours of completion.",
+      });
+    }
+
+    report.isDisputed = true;
+    report.status = "Under Investigation"; // Locks the case
+    report.disputeDetails = {
+      reason: reason || "Citizen disputed completion proof.",
+      raisedAt: new Date(),
+      status: "Under Investigation",
+    };
+
+    await report.save();
+    return res.status(200).json({ message: "Dispute submitted successfully.", report });
+  } catch (err) {
+    return res.status(500).json({ message: "Error filing dispute: " + err.message });
+  }
+};
+
+// 2. Admin fetch case details + Collector's Contact Info (F08)
+export const getInvestigationDetails = async (req, res) => {
+  try {
+    const report = await WasteReport.findById(req.params.id)
+      .populate("reportedBy", "name email phone")
+      .populate("assignedCollector", "name email phone");
+
+    if (!report) {
+      return res.status(404).json({ message: "Report not found." });
+    }
+
+    return res.status(200).json({
+      report,
+      proofOfCollection: report.proofOfCollection,
+      collectorInfo: report.assignedCollector
+        ? {
+            name: report.assignedCollector.name,
+            email: report.assignedCollector.email,
+            phone: report.assignedCollector.phone,
+          }
+        : null,
+    });
+  } catch (err) {
+    return res.status(500).json({ message: "Failed to fetch investigation details: " + err.message });
   }
 };
