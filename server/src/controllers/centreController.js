@@ -68,10 +68,11 @@ export const getAllCentres = async (req, res) => {
 
     let centres = await RecyclingCentre.find(filter);
 
-    // Add distance and isOpen to each centre
+    // Add distance, isOpen, and reviews (newest first) to each centre
     centres = centres.map((centre) => {
       const centreObj = centre.toObject();
       centreObj.isOpen = isOpenNow(centre.hours);
+      centreObj.reviews = [...(centre.reviews || [])].reverse();
 
       // If user's coordinates provided, calculate real distance
       if (lat && lng) {
@@ -116,6 +117,7 @@ export const getCentreById = async (req, res) => {
 
     const centreObj = centre.toObject();
     centreObj.isOpen = isOpenNow(centre.hours);
+    centreObj.reviews = [...(centre.reviews || [])].reverse();
 
     res.status(200).json({ centre: centreObj });
   } catch (error) {
@@ -240,16 +242,23 @@ export const deleteCentre = async (req, res) => {
   }
 };
 
-// @desc    Submit a rating for a centre (citizen, once per centre)
+// @desc    Submit a rating + optional written review for a centre
+//          (citizen, once per centre)
 // @route   POST /api/centres/:id/rate
 // @access  Private (citizen)
 export const rateCentre = async (req, res) => {
   try {
-    const { rating } = req.body;
+    const { rating, comment } = req.body;
 
     if (!rating || rating < 1 || rating > 5) {
       return res.status(400).json({
         message: "Rating must be a number between 1 and 5",
+      });
+    }
+
+    if (comment && comment.length > 500) {
+      return res.status(400).json({
+        message: "Comment must be 500 characters or fewer",
       });
     }
 
@@ -259,8 +268,8 @@ export const rateCentre = async (req, res) => {
       return res.status(404).json({ message: "Recycling centre not found" });
     }
 
-    const alreadyRated = centre.ratedBy.some(
-      (userId) => userId.toString() === req.user._id.toString(),
+    const alreadyRated = centre.reviews.some(
+      (review) => review.ratedBy.toString() === req.user._id.toString(),
     );
     if (alreadyRated) {
       return res.status(400).json({
@@ -268,20 +277,40 @@ export const rateCentre = async (req, res) => {
       });
     }
 
-    const newTotal = centre.totalRatings + 1;
-    const newAverage =
-      (centre.averageRating * centre.totalRatings + rating) / newTotal;
-
-    centre.totalRatings = newTotal;
-    centre.averageRating = parseFloat(newAverage.toFixed(1));
-    centre.ratedBy.push(req.user._id);
+    centre.reviews.push({
+      ratedBy: req.user._id,
+      rating,
+      comment: comment ? comment.trim() : "",
+      reviewerName: req.user.name,
+    });
     await centre.save();
 
     res.status(200).json({
-      message: "Rating submitted successfully",
+      message: "Review submitted successfully",
       averageRating: centre.averageRating,
       totalRatings: centre.totalRatings,
     });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// @desc    Get all reviews for a centre (newest first)
+// @route   GET /api/centres/:id/reviews
+// @access  Public
+export const getCentreReviews = async (req, res) => {
+  try {
+    const centre = await RecyclingCentre.findById(req.params.id).select(
+      "reviews isActive",
+    );
+
+    if (!centre || !centre.isActive) {
+      return res.status(404).json({ message: "Recycling centre not found" });
+    }
+
+    const reviews = [...centre.reviews].reverse();
+
+    res.status(200).json({ reviews });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }

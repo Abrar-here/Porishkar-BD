@@ -47,6 +47,15 @@ const wasteReportSchema = new mongoose.Schema(
       trim: true,
       default: null,
     },
+    // F06 — manual sequence position within a collector's route, set
+    // when a supervisor reorders stops. null until first assigned a
+    // position; the route endpoint falls back to nearest-neighbor
+    // ordering for any stop that doesn't have one yet.
+    routeOrder: {
+      type: Number,
+      default: null,
+    },
+
     images: {
       type: [String],
       default: [],
@@ -83,22 +92,22 @@ const wasteReportSchema = new mongoose.Schema(
       },
     },
     isDisputed: {
-  type: Boolean,
-  default: false,
-},
-disputeDetails: {
-  reason: { type: String, default: "" },
-  raisedAt: { type: Date, default: null },
-  status: {
-    type: String,
-    enum: ["Pending", "Under Investigation", "Resolved", "Dismissed"],
-    default: "Pending",
-  },
-},
+      type: Boolean,
+      default: false,
+    },
+    disputeDetails: {
+      reason: { type: String, default: "" },
+      raisedAt: { type: Date, default: null },
+      status: {
+        type: String,
+        enum: ["Pending", "Under Investigation", "Resolved", "Dismissed"],
+        default: "Pending",
+      },
+    },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 const WasteReport = mongoose.model("WasteReport", wasteReportSchema);
