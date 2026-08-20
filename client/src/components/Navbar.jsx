@@ -34,6 +34,7 @@ function Navbar() {
   const collectorLinks = [
     { to: "/dashboard?tab=available", label: "Available Pickups" },
     { to: "/dashboard?tab=assigned", label: "My Pickups" },
+    { to: "/my-route", label: "My Route" },
   ];
 
   const recyclingLinks = [
@@ -47,6 +48,7 @@ function Navbar() {
     { to: "/admin/reports", label: "All Reports" },
     { to: "/admin/users", label: "Users" },
     { to: "/recycling-centres", label: "Recycling Centres" },
+    { to: "/admin/routes", label: "Collector Routes" },
   ];
 
   const getLinks = () => {

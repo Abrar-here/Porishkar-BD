@@ -21,6 +21,8 @@ import EditListing from "./pages/EditListing";
 import AddRecyclingCentre from "./pages/AddRecyclingCentre";
 import RecyclingCentres from "./pages/RecyclingCentres";
 import EditRecyclingCentre from "./pages/EditRecyclingCentre";
+import AdminRoutes from "./pages/AdminRoutes";
+import CollectorRoute from "./pages/CollectorRoute";
 
 import Navbar from "./components/Navbar";
 
@@ -108,6 +110,8 @@ function App() {
           path="/recycling-centres/:id/edit"
           element={<EditRecyclingCentre />}
         />
+        <Route path="/admin/routes" element={<AdminRoutes />} />
+        <Route path="/my-route" element={<CollectorRoute />} />
       </Route>
 
       {/* Wrong URL */}
