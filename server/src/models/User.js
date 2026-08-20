@@ -61,6 +61,14 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    // F06 — collector's most recently reported GPS position, used as
+    // the starting point for their route's nearest-neighbor ordering.
+    // null until the collector's app first reports a location.
+    currentLocation: {
+      lat: { type: Number, default: null },
+      lng: { type: Number, default: null },
+      updatedAt: { type: Date, default: null },
+    },
   },
   {
     timestamps: true,

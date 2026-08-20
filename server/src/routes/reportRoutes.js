@@ -10,8 +10,11 @@ import {
   getAvailableReports,
   acceptReport,
   getAssignedReports,
-  raiseDispute,            
+  raiseDispute,
   getInvestigationDetails,
+  getCollectorRoute,
+  reorderRoute,
+  resetRouteOrder,
 } from "../controllers/reportController.js";
 import { protect, authorize } from "../middlewares/authMiddleware.js";
 import { upload } from "../config/cloudinary.js";
@@ -44,20 +47,49 @@ router.patch(
   protect,
   authorize("collector"), // Ensure collector is authenticated
   proofUpload.single("proofImage"),
-  completePickupWithProof
+  completePickupWithProof,
 );
 router.put("/:id/cancel", protect, authorize("citizen"), cancelReport);
 router.put("/:id/reschedule", protect, authorize("citizen"), rescheduleReport);
 router.get("/available", protect, authorize("collector"), getAvailableReports);
 router.put("/:id/accept", protect, authorize("collector"), acceptReport);
 router.get("/assigned", protect, authorize("collector"), getAssignedReports);
+// F06 — route view (collector sees own route, admin sees any collector's route)
+router.get(
+  "/route/:collectorId",
+  protect,
+  authorize("collector", "admin"),
+  getCollectorRoute,
+);
 
-router.post("/:id/dispute", protect, authorize("citizen"),upload.array("image", 5), raiseDispute);
+// F06 — supervisor reorders a collector's route
+router.put(
+  "/route/:collectorId/reorder",
+  protect,
+  authorize("admin"),
+  reorderRoute,
+);
+
+// F06 — reset back to the algorithm's suggested (nearest-neighbor) order
+router.put(
+  "/route/:collectorId/reset",
+  protect,
+  authorize("admin"),
+  resetRouteOrder,
+);
+
+router.post(
+  "/:id/dispute",
+  protect,
+  authorize("citizen"),
+  upload.array("image", 5),
+  raiseDispute,
+);
 router.get(
   "/:id/investigate",
   protect,
   authorize("admin"), // <-- Allows Admin to review disputes
-  getInvestigationDetails
+  getInvestigationDetails,
 );
 router.get("/", protect, authorize("admin"), getAllReports);
 

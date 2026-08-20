@@ -2,6 +2,7 @@ import WasteReport from "../models/WasteReport.js";
 import Counter from "../models/Counter.js";
 import { sendSms } from "../services/smsService.js";
 import { awardPoints } from "../services/ecoPointsService.js";
+import User from "../models/User.js";
 
 const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
 
@@ -96,7 +97,10 @@ export const createReport = async (req, res) => {
     res.status(201).json({
       message: "Report submitted successfully",
       ecoPoints: ecoPointsResult
-        ? { pointsEarned: ecoPointsResult.activity.points, newBalance: ecoPointsResult.newBalance }
+        ? {
+            pointsEarned: ecoPointsResult.activity.points,
+            newBalance: ecoPointsResult.newBalance,
+          }
         : null,
       report: {
         id: report._id,
@@ -184,7 +188,10 @@ export const createPickupRequest = async (req, res) => {
       message: "Report submitted successfully",
       smsPreview: smsMessage,
       ecoPoints: ecoPointsResult
-        ? { pointsEarned: ecoPointsResult.activity.points, newBalance: ecoPointsResult.newBalance }
+        ? {
+            pointsEarned: ecoPointsResult.activity.points,
+            newBalance: ecoPointsResult.newBalance,
+          }
         : null,
       report: {
         id: report._id,
@@ -350,7 +357,7 @@ export const getAssignedReports = async (req, res) => {
   }
 };
 
-//Maisara : F08 
+//Maisara : F08
 // Controller function to complete pickup with proof
 export const completePickupWithProof = async (req, res) => {
   try {
@@ -358,12 +365,16 @@ export const completePickupWithProof = async (req, res) => {
     const { latitude, longitude } = req.body;
 
     if (!req.file) {
-      return res.status(400).json({ message: "Proof photo is required to complete the pickup." });
+      return res
+        .status(400)
+        .json({ message: "Proof photo is required to complete the pickup." });
     }
 
     const report = await WasteReport.findById(reportId);
     if (!report) {
-      return res.status(404).json({ message: "Report/Pickup request not found." });
+      return res
+        .status(404)
+        .json({ message: "Report/Pickup request not found." });
     }
 
     // Save proof details
@@ -392,11 +403,16 @@ export const completePickupWithProof = async (req, res) => {
       message: "Pickup completed successfully with proof of collection.",
       report,
       citizenEcoPoints: ecoPointsResult
-        ? { pointsEarned: ecoPointsResult.activity.points, newBalance: ecoPointsResult.newBalance }
+        ? {
+            pointsEarned: ecoPointsResult.activity.points,
+            newBalance: ecoPointsResult.newBalance,
+          }
         : null,
     });
   } catch (error) {
-    res.status(500).json({ message: "Failed to upload proof.", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Failed to upload proof.", error: error.message });
   }
 };
 
@@ -411,16 +427,21 @@ export const raiseDispute = async (req, res) => {
     }
 
     if (!report.proofOfCollection?.imageUrl && report.status !== "Completed") {
-      return res.status(400).json({ message: "Cannot dispute a report without completion proof." });
+      return res
+        .status(400)
+        .json({ message: "Cannot dispute a report without completion proof." });
     }
 
     // Check 24-hour limit
-    const uploadedAt = new Date(report.proofOfCollection?.uploadedAt || report.updatedAt).getTime();
+    const uploadedAt = new Date(
+      report.proofOfCollection?.uploadedAt || report.updatedAt,
+    ).getTime();
     const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
 
     if (Date.now() - uploadedAt > TWENTY_FOUR_HOURS) {
       return res.status(400).json({
-        message: "Dispute window closed. Disputes must be filed within 24 hours of completion.",
+        message:
+          "Dispute window closed. Disputes must be filed within 24 hours of completion.",
       });
     }
 
@@ -433,9 +454,13 @@ export const raiseDispute = async (req, res) => {
     };
 
     await report.save();
-    return res.status(200).json({ message: "Dispute submitted successfully.", report });
+    return res
+      .status(200)
+      .json({ message: "Dispute submitted successfully.", report });
   } catch (err) {
-    return res.status(500).json({ message: "Error filing dispute: " + err.message });
+    return res
+      .status(500)
+      .json({ message: "Error filing dispute: " + err.message });
   }
 };
 
@@ -462,6 +487,242 @@ export const getInvestigationDetails = async (req, res) => {
         : null,
     });
   } catch (err) {
-    return res.status(500).json({ message: "Failed to fetch investigation details: " + err.message });
+    return res.status(500).json({
+      message: "Failed to fetch investigation details: " + err.message,
+    });
+  }
+};
+
+// ─── F06: Route Optimisation ──────────────────────────────
+
+// Same Haversine formula used in F12's centreController — distance in
+// km between two lat/lng points.
+const calculateDistance = (lat1, lng1, lat2, lng2) => {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
+
+// Helper: greedy nearest-neighbor ordering. If a starting point is
+// given (the collector's current location), the first stop chosen is
+// whichever is nearest to that point — otherwise falls back to
+// whatever order the stops array arrived in. Not a perfect "optimal
+// route" (that's the Traveling Salesman Problem) — a simple, fast
+// approximation, matching the doc's "grouping geographically adjacent
+// pickups to minimise total travel distance."
+const nearestNeighborOrder = (stops, startPoint = null) => {
+  if (stops.length <= 1) return stops;
+
+  const remaining = [...stops];
+  let ordered;
+
+  if (startPoint) {
+    // Find whichever stop is nearest to the collector's actual
+    // location, and start there instead of an arbitrary first entry.
+    let nearestIndex = 0;
+    let nearestDist = Infinity;
+    remaining.forEach((stop, i) => {
+      const dist = calculateDistance(
+        startPoint.lat,
+        startPoint.lng,
+        stop.location.lat,
+        stop.location.lng,
+      );
+      if (dist < nearestDist) {
+        nearestDist = dist;
+        nearestIndex = i;
+      }
+    });
+    ordered = [remaining.splice(nearestIndex, 1)[0]];
+  } else {
+    ordered = [remaining.shift()];
+  }
+
+  while (remaining.length > 0) {
+    const last = ordered[ordered.length - 1];
+    let nearestIndex = 0;
+    let nearestDist = Infinity;
+
+    remaining.forEach((stop, i) => {
+      const dist = calculateDistance(
+        last.location.lat,
+        last.location.lng,
+        stop.location.lat,
+        stop.location.lng,
+      );
+      if (dist < nearestDist) {
+        nearestDist = dist;
+        nearestIndex = i;
+      }
+    });
+
+    ordered.push(remaining.splice(nearestIndex, 1)[0]);
+  }
+
+  return ordered;
+};
+
+// @desc    Get a collector's route (their active, unresolved stops,
+//          in sequence). Callable by the collector themselves or by
+//          an admin/supervisor viewing any collector's route.
+// @route   GET /api/reports/route/:collectorId
+// @access  Private (collector viewing own route, or admin)
+export const getCollectorRoute = async (req, res) => {
+  try {
+    const { collectorId } = req.params;
+
+    // A collector may only view their own route; an admin may view any.
+    if (
+      req.user.role === "collector" &&
+      req.user._id.toString() !== collectorId
+    ) {
+      return res.status(403).json({
+        message: "Collectors can only view their own route",
+      });
+    }
+
+    // Only stops that are still actionable belong on today's route —
+    // resolved/cancelled/closed pickups are done, not part of the plan.
+    const activeStatuses = [
+      "Assigned",
+      "Collector En Route",
+      "Cleanup In Progress",
+    ];
+
+    const stops = await WasteReport.find({
+      assignedCollector: collectorId,
+      status: { $in: activeStatuses },
+    }).populate("reportedBy", "name phone");
+
+    // Fetch the collector's most recently reported location, if any —
+    // used as the starting point for nearest-neighbor ordering instead
+    // of an arbitrary database order.
+    const collectorUser =
+      await User.findById(collectorId).select("currentLocation");
+    const startPoint =
+      collectorUser?.currentLocation?.lat != null
+        ? collectorUser.currentLocation
+        : null;
+
+    // Split into stops with a manual order already set (from a prior
+    // supervisor reorder) and stops without one yet.
+    const withOrder = stops
+      .filter((s) => s.routeOrder !== null)
+      .sort((a, b) => a.routeOrder - b.routeOrder);
+
+    const withoutOrder = nearestNeighborOrder(
+      stops.filter((s) => s.routeOrder === null),
+      startPoint,
+    );
+
+    // Manually-ordered stops come first (a supervisor's explicit
+    // sequencing takes priority), then the rest fall in behind using
+    // the nearest-neighbor grouping.
+    // Manually-ordered stops come first (a supervisor's explicit
+    // sequencing takes priority), then the rest fall in behind using
+    // the nearest-neighbor grouping.
+    const route = [...withOrder, ...withoutOrder];
+
+    // Total distance a collector would travel visiting these stops in
+    // this exact order — lets an admin judge whether a manual reorder
+    // actually helped or hurt, instead of guessing.
+    let totalDistanceKm = 0;
+    for (let i = 0; i < route.length - 1; i++) {
+      totalDistanceKm += calculateDistance(
+        route[i].location.lat,
+        route[i].location.lng,
+        route[i + 1].location.lat,
+        route[i + 1].location.lng,
+      );
+    }
+
+    res.status(200).json({
+      route,
+      totalDistanceKm: parseFloat(totalDistanceKm.toFixed(2)),
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// @desc    Supervisor manually reorders a collector's stops.
+//          Accepts an ordered array of report IDs and persists that
+//          exact sequence.
+// @route   PUT /api/reports/route/:collectorId/reorder
+// @access  Private (admin)
+export const reorderRoute = async (req, res) => {
+  try {
+    const { collectorId } = req.params;
+    const { orderedReportIds } = req.body;
+
+    if (!Array.isArray(orderedReportIds) || orderedReportIds.length === 0) {
+      return res.status(400).json({
+        message: "orderedReportIds must be a non-empty array of report IDs",
+      });
+    }
+
+    // Confirm every ID in the list actually belongs to this collector,
+    // so a supervisor can't accidentally (or maliciously) reorder
+    // someone else's report into this collector's route.
+    const reports = await WasteReport.find({
+      _id: { $in: orderedReportIds },
+      assignedCollector: collectorId,
+    });
+
+    if (reports.length !== orderedReportIds.length) {
+      return res.status(400).json({
+        message:
+          "One or more report IDs do not belong to this collector's assigned stops",
+      });
+    }
+
+    // Assign sequence positions in the order the supervisor specified.
+    await Promise.all(
+      orderedReportIds.map((reportId, index) =>
+        WasteReport.findByIdAndUpdate(reportId, { routeOrder: index }),
+      ),
+    );
+
+    res.status(200).json({ message: "Route reordered successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// @desc    Clear a collector's manual route ordering, letting the
+//          nearest-neighbor algorithm take over again on next fetch.
+// @route   PUT /api/reports/route/:collectorId/reset
+// @access  Private (admin)
+export const resetRouteOrder = async (req, res) => {
+  try {
+    const { collectorId } = req.params;
+
+    const activeStatuses = [
+      "Assigned",
+      "Collector En Route",
+      "Cleanup In Progress",
+    ];
+
+    await WasteReport.updateMany(
+      {
+        assignedCollector: collectorId,
+        status: { $in: activeStatuses },
+      },
+      { routeOrder: null },
+    );
+
+    res.status(200).json({
+      message: "Route reset — the suggested order will be used again",
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };

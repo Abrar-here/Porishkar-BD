@@ -133,14 +133,21 @@ export const getMe = async (req, res) => {
 export const sendOtp = async (req, res) => {
   try {
     const { phone } = req.body;
-    if (!phone) return res.status(400).json({ message: "Please provide a phone number" });
+    if (!phone)
+      return res.status(400).json({ message: "Please provide a phone number" });
     const user = await User.findOne({ phone });
-    if (!user) return res.status(404).json({ message: "No account found with this phone number" });
+    if (!user)
+      return res
+        .status(404)
+        .json({ message: "No account found with this phone number" });
     const otp = generateOtp();
     user.otp = otp;
     user.otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000);
     await user.save();
-    await sendSms(phone, `Your Porishkar-BD verification code is ${otp}. It expires in 5 minutes.`);
+    await sendSms(
+      phone,
+      `Your Porishkar-BD verification code is ${otp}. It expires in 5 minutes.`,
+    );
     res.status(200).json({ message: "OTP sent successfully", otp });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
@@ -153,11 +160,19 @@ export const sendOtp = async (req, res) => {
 export const verifyOtp = async (req, res) => {
   try {
     const { phone, otp } = req.body;
-    if (!phone || !otp) return res.status(400).json({ message: "Please provide phone and OTP" });
+    if (!phone || !otp)
+      return res.status(400).json({ message: "Please provide phone and OTP" });
     const user = await User.findOne({ phone }).select("+otp +otpExpiresAt");
-    if (!user) return res.status(404).json({ message: "No account found with this phone number" });
-    if (!user.otp || user.otp !== otp) return res.status(400).json({ message: "Invalid OTP" });
-    if (user.otpExpiresAt < new Date()) return res.status(400).json({ message: "OTP has expired, please request a new one" });
+    if (!user)
+      return res
+        .status(404)
+        .json({ message: "No account found with this phone number" });
+    if (!user.otp || user.otp !== otp)
+      return res.status(400).json({ message: "Invalid OTP" });
+    if (user.otpExpiresAt < new Date())
+      return res
+        .status(400)
+        .json({ message: "OTP has expired, please request a new one" });
     user.phoneVerified = true;
     user.otp = undefined;
     user.otpExpiresAt = undefined;
@@ -174,15 +189,24 @@ export const verifyOtp = async (req, res) => {
 export const forgotPassword = async (req, res) => {
   try {
     const { phone } = req.body;
-    if (!phone) return res.status(400).json({ message: "Please provide a phone number" });
+    if (!phone)
+      return res.status(400).json({ message: "Please provide a phone number" });
     const user = await User.findOne({ phone });
-    if (!user) return res.status(404).json({ message: "No account found with this phone number" });
+    if (!user)
+      return res
+        .status(404)
+        .json({ message: "No account found with this phone number" });
     const otp = generateOtp();
     user.otp = otp;
     user.otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000);
     await user.save();
-    await sendSms(phone, `Your Porishkar-BD password reset code is ${otp}. It expires in 5 minutes.`);
-    res.status(200).json({ message: "Password reset OTP sent successfully", otp });
+    await sendSms(
+      phone,
+      `Your Porishkar-BD password reset code is ${otp}. It expires in 5 minutes.`,
+    );
+    res
+      .status(200)
+      .json({ message: "Password reset OTP sent successfully", otp });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -194,17 +218,71 @@ export const forgotPassword = async (req, res) => {
 export const resetPassword = async (req, res) => {
   try {
     const { phone, otp, newPassword } = req.body;
-    if (!phone || !otp || !newPassword) return res.status(400).json({ message: "Please provide phone, OTP, and a new password" });
-    if (newPassword.length < 6) return res.status(400).json({ message: "Password must be at least 6 characters" });
+    if (!phone || !otp || !newPassword)
+      return res
+        .status(400)
+        .json({ message: "Please provide phone, OTP, and a new password" });
+    if (newPassword.length < 6)
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 6 characters" });
     const user = await User.findOne({ phone }).select("+otp +otpExpiresAt");
-    if (!user) return res.status(404).json({ message: "No account found with this phone number" });
-    if (!user.otp || user.otp !== otp) return res.status(400).json({ message: "Invalid OTP" });
-    if (user.otpExpiresAt < new Date()) return res.status(400).json({ message: "OTP has expired, please request a new one" });
+    if (!user)
+      return res
+        .status(404)
+        .json({ message: "No account found with this phone number" });
+    if (!user.otp || user.otp !== otp)
+      return res.status(400).json({ message: "Invalid OTP" });
+    if (user.otpExpiresAt < new Date())
+      return res
+        .status(400)
+        .json({ message: "OTP has expired, please request a new one" });
     user.password = newPassword;
     user.otp = undefined;
     user.otpExpiresAt = undefined;
     await user.save();
-    res.status(200).json({ message: "Password reset successfully. You can now log in." });
+    res
+      .status(200)
+      .json({ message: "Password reset successfully. You can now log in." });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// @desc    List all collectors (id + name), for admin dropdowns like
+//          the F06 route-selection page.
+// @route   GET /api/auth/collectors
+// @access  Private (admin)
+export const getCollectors = async (req, res) => {
+  try {
+    const collectors = await User.find({ role: "collector" }).select(
+      "name email phone",
+    );
+    res.status(200).json({ collectors });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// @desc    Collector reports their current GPS position. Used as the
+//          starting point for their route's nearest-neighbor ordering.
+// @route   PUT /api/auth/location
+// @access  Private (collector)
+export const updateMyLocation = async (req, res) => {
+  try {
+    const { lat, lng } = req.body;
+
+    if (typeof lat !== "number" || typeof lng !== "number") {
+      return res.status(400).json({
+        message: "lat and lng are required and must be numbers",
+      });
+    }
+
+    await User.findByIdAndUpdate(req.user._id, {
+      currentLocation: { lat, lng, updatedAt: new Date() },
+    });
+
+    res.status(200).json({ message: "Location updated" });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
