@@ -30,9 +30,7 @@ function MyListings() {
       "Are you sure you want to delete this listing?"
     );
 
-    if (!confirmDelete) {
-      return;
-    }
+    if (!confirmDelete) return;
 
     try {
       await api.delete(`/listings/${id}`);
@@ -46,6 +44,40 @@ function MyListings() {
     } catch (err) {
       setError(
         err.response?.data?.message || "Failed to delete listing"
+      );
+    }
+  };
+
+
+  // Demo branch feature: Mark listing as sold + Eco Points
+  const handleMarkSold = async (id) => {
+    const confirmSold = window.confirm(
+      "Mark this listing as sold? This can't be undone."
+    );
+
+    if (!confirmSold) return;
+
+    try {
+      const res = await api.patch(`/listings/${id}/sold`);
+
+      setListings((currentListings) =>
+        currentListings.map((listing) =>
+          listing._id === id
+            ? { ...listing, status: "Sold" }
+            : listing
+        )
+      );
+
+      if (res.data.ecoPoints) {
+        alert(
+          `Listing marked as sold! You earned ${res.data.ecoPoints.pointsEarned} eco points (new balance: ${res.data.ecoPoints.newBalance}).`
+        );
+      }
+
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+        "Failed to mark listing as sold"
       );
     }
   };
@@ -106,6 +138,7 @@ function MyListings() {
 
 
 
+
         {/* Empty State */}
 
         {!error && listings.length === 0 && (
@@ -135,6 +168,7 @@ function MyListings() {
 
 
 
+
         {/* Listings */}
 
         {listings.length > 0 && (
@@ -152,7 +186,6 @@ function MyListings() {
 
                 <div className="flex justify-between items-center mb-3">
 
-
                   <span className="text-green-600 font-medium">
                     {listing.materialType}
                   </span>
@@ -161,7 +194,6 @@ function MyListings() {
                   <span className="text-sm text-gray-500">
                     {listing.status}
                   </span>
-
 
                 </div>
 
@@ -206,8 +238,8 @@ function MyListings() {
                     </span>{" "}
                     {
                       listing.listingType === "Donation"
-                      ? "Free / Donation"
-                      : `৳${listing.askingPrice}`
+                        ? "Free / Donation"
+                        : `৳${listing.askingPrice}`
                     }
                   </p>
 
@@ -217,9 +249,16 @@ function MyListings() {
 
 
 
+
                 {/* Action Buttons */}
 
-                <div className="grid grid-cols-2 gap-3 mt-6">
+                <div
+                  className={`grid gap-3 mt-6 ${
+                    listing.status === "Active"
+                      ? "grid-cols-2 md:grid-cols-4"
+                      : "grid-cols-3"
+                  }`}
+                >
 
 
                   <Link
@@ -240,6 +279,7 @@ function MyListings() {
 
 
 
+                  {/* F10 Bid & Offer */}
 
                   <Link
                     to={`/my-listings/${listing._id}/offers`}
@@ -247,6 +287,22 @@ function MyListings() {
                   >
                     Offers
                   </Link>
+
+
+
+
+                  {/* Mark Sold */}
+
+                  {listing.status === "Active" && (
+
+                    <button
+                      onClick={() => handleMarkSold(listing._id)}
+                      className="py-2 bg-emerald-700 text-white rounded-lg hover:bg-emerald-800"
+                    >
+                      Mark Sold
+                    </button>
+
+                  )}
 
 
 
@@ -261,7 +317,6 @@ function MyListings() {
 
 
                 </div>
-
 
 
               </div>

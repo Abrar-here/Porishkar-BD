@@ -1,5 +1,10 @@
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
+import { sendSms } from "../services/smsService.js";
+
+const generateOtp = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
 
 // @desc    Register a new user
 // @route   POST /api/auth/register
@@ -120,4 +125,87 @@ export const loginUser = async (req, res) => {
 export const getMe = async (req, res) => {
   // req.user was attached by the protect middleware
   res.status(200).json({ user: req.user });
+};
+
+// @desc    Send a 6-digit OTP to the user's phone (valid for 5 minutes)
+// @route   POST /api/auth/send-otp
+// @access  Public
+export const sendOtp = async (req, res) => {
+  try {
+    const { phone } = req.body;
+    if (!phone) return res.status(400).json({ message: "Please provide a phone number" });
+    const user = await User.findOne({ phone });
+    if (!user) return res.status(404).json({ message: "No account found with this phone number" });
+    const otp = generateOtp();
+    user.otp = otp;
+    user.otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000);
+    await user.save();
+    await sendSms(phone, `Your Porishkar-BD verification code is ${otp}. It expires in 5 minutes.`);
+    res.status(200).json({ message: "OTP sent successfully", otp });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// @desc    Verify the OTP a user submits
+// @route   POST /api/auth/verify-otp
+// @access  Public
+export const verifyOtp = async (req, res) => {
+  try {
+    const { phone, otp } = req.body;
+    if (!phone || !otp) return res.status(400).json({ message: "Please provide phone and OTP" });
+    const user = await User.findOne({ phone }).select("+otp +otpExpiresAt");
+    if (!user) return res.status(404).json({ message: "No account found with this phone number" });
+    if (!user.otp || user.otp !== otp) return res.status(400).json({ message: "Invalid OTP" });
+    if (user.otpExpiresAt < new Date()) return res.status(400).json({ message: "OTP has expired, please request a new one" });
+    user.phoneVerified = true;
+    user.otp = undefined;
+    user.otpExpiresAt = undefined;
+    await user.save();
+    res.status(200).json({ message: "Phone number verified successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// @desc    Send a 6-digit OTP to reset a forgotten password (valid for 5 minutes)
+// @route   POST /api/auth/forgot-password
+// @access  Public
+export const forgotPassword = async (req, res) => {
+  try {
+    const { phone } = req.body;
+    if (!phone) return res.status(400).json({ message: "Please provide a phone number" });
+    const user = await User.findOne({ phone });
+    if (!user) return res.status(404).json({ message: "No account found with this phone number" });
+    const otp = generateOtp();
+    user.otp = otp;
+    user.otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000);
+    await user.save();
+    await sendSms(phone, `Your Porishkar-BD password reset code is ${otp}. It expires in 5 minutes.`);
+    res.status(200).json({ message: "Password reset OTP sent successfully", otp });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// @desc    Reset a user's password after verifying their OTP
+// @route   POST /api/auth/reset-password
+// @access  Public
+export const resetPassword = async (req, res) => {
+  try {
+    const { phone, otp, newPassword } = req.body;
+    if (!phone || !otp || !newPassword) return res.status(400).json({ message: "Please provide phone, OTP, and a new password" });
+    if (newPassword.length < 6) return res.status(400).json({ message: "Password must be at least 6 characters" });
+    const user = await User.findOne({ phone }).select("+otp +otpExpiresAt");
+    if (!user) return res.status(404).json({ message: "No account found with this phone number" });
+    if (!user.otp || user.otp !== otp) return res.status(400).json({ message: "Invalid OTP" });
+    if (user.otpExpiresAt < new Date()) return res.status(400).json({ message: "OTP has expired, please request a new one" });
+    user.password = newPassword;
+    user.otp = undefined;
+    user.otpExpiresAt = undefined;
+    await user.save();
+    res.status(200).json({ message: "Password reset successfully. You can now log in." });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
 };

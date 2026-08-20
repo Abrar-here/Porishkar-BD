@@ -6,19 +6,16 @@ function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
-
 
   // Highlight active menu
   const isActive = (path) =>
     location.pathname.startsWith(path)
       ? "text-green-600 font-semibold border-b-2 border-green-600 pb-0.5"
       : "text-gray-600 hover:text-green-600 transition-colors";
-
 
 
   // Citizen / Buyer / Seller
@@ -51,8 +48,19 @@ function Navbar() {
       to: "/recycling-centres",
       label: "Recycling Centres",
     },
+    {
+      to: "/eco-points",
+      label: "Eco Points",
+    },
+    {
+      to: "/leaderboard",
+      label: "Leaderboard",
+    },
+    {
+      to: "/achievements",
+      label: "Achievements",
+    },
   ];
-
 
 
   // Collector
@@ -66,7 +74,6 @@ function Navbar() {
       label: "My Pickups",
     },
   ];
-
 
 
   // Recycling Company
@@ -84,7 +91,6 @@ function Navbar() {
       label: "My Listings",
     },
   ];
-
 
 
   // Admin
@@ -108,11 +114,8 @@ function Navbar() {
   ];
 
 
-
   const getLinks = () => {
-
     switch (user?.role) {
-
       case "citizen":
         return citizenLinks;
 
@@ -127,22 +130,16 @@ function Navbar() {
 
       default:
         return [];
-
     }
-
   };
 
 
-
   return (
-
     <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
 
       <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
 
-
         {/* Logo */}
-
         <Link
           to="/dashboard"
           className="text-xl font-bold text-green-600 shrink-0"
@@ -151,10 +148,7 @@ function Navbar() {
         </Link>
 
 
-
-
         {/* Navigation */}
-
         <div className="hidden md:flex items-center gap-5">
 
           {getLinks().map((link) => (
@@ -172,18 +166,12 @@ function Navbar() {
         </div>
 
 
-
-
-
         {/* User Profile */}
-
         <div className="flex items-center gap-3">
-
 
           {user && (
 
             <div className="flex items-center gap-2">
-
 
               <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center shrink-0">
 
@@ -194,8 +182,6 @@ function Navbar() {
                 </span>
 
               </div>
-
-
 
 
               <div className="hidden md:block">
@@ -213,45 +199,28 @@ function Navbar() {
 
                 </p>
 
-
               </div>
-
 
             </div>
 
           )}
 
 
-
-
-
-
           {/* Logout */}
-
           <button
-
             onClick={handleLogout}
-
             className="px-3 py-1.5 bg-red-50 text-red-600 text-sm rounded-lg hover:bg-red-100 border border-red-100 shrink-0"
-
           >
-
             Logout
-
           </button>
 
 
         </div>
 
-
       </div>
 
-
     </nav>
-
   );
-
 }
-
 
 export default Navbar;

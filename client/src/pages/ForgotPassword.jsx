@@ -6,7 +6,6 @@ function ForgotPassword() {
   const { forgotPassword, resetPassword } = useAuth();
   const navigate = useNavigate();
 
-  // step 1 = enter phone, step 2 = enter OTP + new password
   const [step, setStep] = useState(1);
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
@@ -22,7 +21,7 @@ function ForgotPassword() {
     setSubmitting(true);
     try {
       const data = await forgotPassword(phone);
-      setDemoOtp(data.otp || ""); // demo-only: real SMS wouldn't return this
+      setDemoOtp(data.otp || "");
       setSuccess("A reset code has been sent.");
       setStep(2);
     } catch (err) {
@@ -61,8 +60,7 @@ function ForgotPassword() {
 
         {demoOtp && (
           <div className="mb-4 p-3 bg-yellow-50 text-yellow-800 rounded-lg text-sm">
-            <strong>Demo mode:</strong> since there's no live SMS provider
-            connected yet, your code is shown here — {demoOtp}
+            Your reset code: <strong>{demoOtp}</strong>
           </div>
         )}
         {error && (
@@ -126,10 +124,7 @@ function ForgotPassword() {
 
         <p className="text-center text-gray-500 text-sm mt-6">
           Remembered your password?{" "}
-          <Link
-            to="/login"
-            className="text-green-600 font-medium hover:underline"
-          >
+          <Link to="/login" className="text-green-600 font-medium hover:underline">
             Log in
           </Link>
         </p>

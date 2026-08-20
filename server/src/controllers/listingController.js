@@ -1,5 +1,6 @@
 import Listing from "../models/Listing.js";
 import cloudinary from "../config/cloudinary.js";
+import { awardPoints } from "../services/ecoPointsService.js";
 
 // Create a new recyclable material listing
 export const createListing = async (req, res) => {
@@ -294,6 +295,54 @@ export const updateListing = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to update listing",
+      error: error.message,
+    });
+  }
+};
+
+// Mark a listing as sold — only the seller can do this, and only for their
+// own Active listings. Awards eco points to the seller.
+export const markListingSold = async (req, res) => {
+  try {
+    const listing = await Listing.findById(req.params.id);
+
+    if (!listing) {
+      return res.status(404).json({ success: false, message: "Listing not found" });
+    }
+
+    if (listing.seller.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: "You are not allowed to update this listing" });
+    }
+
+    if (listing.status !== "Active") {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot mark a listing with status "${listing.status}" as sold`,
+      });
+    }
+
+    listing.status = "Sold";
+    await listing.save();
+
+    let ecoPointsResult = null;
+    try {
+      ecoPointsResult = await awardPoints(req.user._id, "sell_recyclables");
+    } catch (pointsError) {
+      console.error("Eco points award failed:", pointsError.message);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Listing marked as sold",
+      listing,
+      ecoPoints: ecoPointsResult
+        ? { pointsEarned: ecoPointsResult.activity.points, newBalance: ecoPointsResult.newBalance }
+        : null,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to mark listing as sold",
       error: error.message,
     });
   }
