@@ -27,6 +27,7 @@ function Navbar() {
     { to: "/eco-points", label: "Eco Points" },
     { to: "/leaderboard", label: "Leaderboard" },
     { to: "/achievements", label: "Achievements" },
+    { to: "/heatmap", label: "Hotspot Map" },
   ];
 
   // inside Navbar.jsx
@@ -49,6 +50,8 @@ function Navbar() {
     { to: "/admin/users", label: "Users" },
     { to: "/recycling-centres", label: "Recycling Centres" },
     { to: "/admin/routes", label: "Collector Routes" },
+    { to: "/admin/analytics", label: "Analytics" },
+    { to: "/heatmap", label: "Hotspot Map" },
   ];
 
   const getLinks = () => {

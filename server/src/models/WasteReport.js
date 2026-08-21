@@ -55,6 +55,13 @@ const wasteReportSchema = new mongoose.Schema(
       type: Number,
       default: null,
     },
+    // F04 — set to true when an admin escalates a hotspot cluster
+    // this report belongs to. Surfaces the report as high-priority
+    // elsewhere in the admin tooling (e.g. route views, report lists).
+    isPriority: {
+      type: Boolean,
+      default: false,
+    },
 
     images: {
       type: [String],

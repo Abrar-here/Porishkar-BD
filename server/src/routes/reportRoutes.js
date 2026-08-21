@@ -91,7 +91,6 @@ router.get(
   authorize("admin"), // <-- Allows Admin to review disputes
   getInvestigationDetails,
 );
-router.get("/", protect, authorize("admin"), getAllReports);
 
 // Shared
 router.get("/my", protect, getMyReports);

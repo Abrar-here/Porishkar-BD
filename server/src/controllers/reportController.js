@@ -388,6 +388,7 @@ export const completePickupWithProof = async (req, res) => {
     };
 
     report.status = "Resolved"; // or "Resolved" depending on your app standard
+    report.isPriority = false;
     await report.save();
 
     // Eco points go to the CITIZEN who requested the pickup, not the
@@ -623,9 +624,6 @@ export const getCollectorRoute = async (req, res) => {
       startPoint,
     );
 
-    // Manually-ordered stops come first (a supervisor's explicit
-    // sequencing takes priority), then the rest fall in behind using
-    // the nearest-neighbor grouping.
     // Manually-ordered stops come first (a supervisor's explicit
     // sequencing takes priority), then the rest fall in behind using
     // the nearest-neighbor grouping.

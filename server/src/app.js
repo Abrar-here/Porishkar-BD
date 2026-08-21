@@ -7,11 +7,15 @@ import centreRoutes from "./routes/centreRoutes.js";
 import ecoPointsRoutes from "./routes/ecoPointsRoutes.js";
 import leaderboardRoutes from "./routes/leaderboardRoutes.js";
 import badgeRoutes from "./routes/badgeRoutes.js";
+import analyticsRoutes from "./routes/analyticsRoutes.js";
+import heatmapRoutes from "./routes/heatmapRoutes.js";
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 app.use("/api/listings", listingRoutes);
+app.use("/api/heatmap", heatmapRoutes);
+app.use("/api/analytics", analyticsRoutes);
 app.use("/api/centres", centreRoutes);
 app.use("/api/ecopoints", ecoPointsRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);

@@ -23,6 +23,9 @@ import RecyclingCentres from "./pages/RecyclingCentres";
 import EditRecyclingCentre from "./pages/EditRecyclingCentre";
 import AdminRoutes from "./pages/AdminRoutes";
 import CollectorRoute from "./pages/CollectorRoute";
+import AdminAnalytics from "./pages/AdminAnalytics";
+import HotspotHeatmap from "./pages/HotspotHeatmap";
+import AdminReports from "./pages/AdminReports";
 
 import Navbar from "./components/Navbar";
 
@@ -112,6 +115,9 @@ function App() {
         />
         <Route path="/admin/routes" element={<AdminRoutes />} />
         <Route path="/my-route" element={<CollectorRoute />} />
+        <Route path="/admin/analytics" element={<AdminAnalytics />} />
+        <Route path="/heatmap" element={<HotspotHeatmap />} />
+        <Route path="/admin/reports" element={<AdminReports />} />
       </Route>
 
       {/* Wrong URL */}
