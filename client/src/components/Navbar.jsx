@@ -48,6 +48,7 @@ function Navbar() {
   const adminLinks = [
     { to: "/dashboard", label: "Dashboard" },
     { to: "/admin/reports", label: "All Reports" },
+    { to: "/admin/reports/queue", label: "Priority Queue" },
     { to: "/admin/users", label: "Users" },
     { to: "/recycling-centres", label: "Recycling Centres" },
     { to: "/admin/routes", label: "Collector Routes" },

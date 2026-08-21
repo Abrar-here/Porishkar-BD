@@ -126,7 +126,7 @@ function App() {
           path="/recycling-centres/:id/edit"
           element={<EditRecyclingCentre />}
         />
-        <Route path="/admin/reports" element={<AdminReportQueue />} />
+        <Route path="/admin/reports/queue" element={<AdminReportQueue />} />
 
         <Route path="/admin/routes" element={<AdminRoutes />} />
         <Route path="/my-route" element={<CollectorRoute />} />
