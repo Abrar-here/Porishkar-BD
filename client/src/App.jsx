@@ -24,6 +24,7 @@ import EditRecyclingCentre from "./pages/EditRecyclingCentre";
 import AdminRoutes from "./pages/AdminRoutes";
 import CollectorRoute from "./pages/CollectorRoute";
 import AdminReportQueue from "./pages/AdminReportQueue";
+import AdminPerformanceDashboard from "./pages/AdminPerformanceDashboard";
 import Navbar from "./components/Navbar";
 
 // Layout for logged-in pages
@@ -105,6 +106,10 @@ function App() {
         <Route path="/recycling-centres" element={<RecyclingCentres />} />
 
         <Route path="/recycling-centres/add" element={<AddRecyclingCentre />} />
+
+        
+
+        <Route path="/admin/performance" element={<AdminPerformanceDashboard />} />
 
         <Route
           path="/recycling-centres/:id/edit"

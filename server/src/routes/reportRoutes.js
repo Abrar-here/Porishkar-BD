@@ -51,6 +51,9 @@ router.patch(
   proofUpload.single("proofImage"),
   completePickupWithProof,
 );
+
+
+
 router.put("/:id/cancel", protect, authorize("citizen"), cancelReport);
 router.put("/:id/reschedule", protect, authorize("citizen"), rescheduleReport);
 router.get("/available", protect, authorize("collector"), getAvailableReports);
