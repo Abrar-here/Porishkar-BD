@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import api from "../api/axios";
 import RequestPickupModal from "./RequestPickupModal";
 import ViewProofModal from "./ViewProofModal";
+import { Link } from "react-router-dom";
 
 const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
 
@@ -490,6 +491,17 @@ const [investigationLoading, setInvestigationLoading] = useState(false);
                 </button>
               </div>
             )}
+            {/* Admin: Collector Performance Link */}
+{isAdmin && (
+  <div className="pt-4">
+    <Link
+      to="/admin/performance"
+      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow transition duration-200 inline-flex items-center gap-2"
+    >
+      <span>📊 Collector Performance</span>
+    </Link>
+  </div>
+)}
           </div>
 
           <div className="mt-6 md:mt-0 flex flex-col items-center text-center space-y-2 bg-white/40 backdrop-blur-xs p-4 rounded-2xl border border-emerald-100">
@@ -678,6 +690,7 @@ const [investigationLoading, setInvestigationLoading] = useState(false);
                           )}
                       </div>
 
+
                      {/* Actions */}
 {isAdmin && (item.status === "Disputed" || item.status === "disputed" || item.isDisputed) ? (
   <button
@@ -704,6 +717,7 @@ const [investigationLoading, setInvestigationLoading] = useState(false);
                             <div className="text-center text-xs text-emerald-800 font-semibold py-1.5 bg-emerald-100 rounded-lg">
                               ✓ Assigned to You
                             </div>
+                      
                             <button
                               onClick={() => {
                                 setSelectedProofReportId(itemId);
@@ -724,6 +738,8 @@ const [investigationLoading, setInvestigationLoading] = useState(false);
     View Proof of Collection
   </button>
 ) : !isNonModifiableStatus && !isLocked ? (
+
+  
   /* 2. Show Reschedule & Cancel if report is active and unlocked */
   <div className="flex space-x-2 pt-2">
     <button
