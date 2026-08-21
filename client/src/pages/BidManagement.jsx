@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+
 import {
   getListingBids,
   acceptBid,
@@ -7,13 +8,22 @@ import {
 } from "../api/bids";
 
 
+
 function BidManagement() {
+
 
   const { id } = useParams();
 
+
   const [bids, setBids] = useState([]);
+
   const [loading, setLoading] = useState(true);
+
   const [error, setError] = useState("");
+
+
+
+
 
 
 
@@ -25,89 +35,159 @@ function BidManagement() {
 
 
 
+
+
+
+
+
   const fetchBids = async () => {
+
 
     try {
 
+
       const res = await getListingBids(id);
+
 
       setBids(res.bids);
 
 
+
     } catch (err) {
+
 
       setError(
         err.response?.data?.message ||
         "Failed to load bids"
       );
 
+
+
     } finally {
+
 
       setLoading(false);
 
+
     }
+
 
   };
 
 
 
+
+
+
+
+
+
+  // Seller accepts bid
 
   const handleAccept = async (bidId) => {
 
+
     try {
+
 
       await acceptBid(bidId);
 
+
+
+      alert(
+        "Bid accepted successfully. Waiting for buyer payment."
+      );
+
+
+
       fetchBids();
+
+
 
     } catch (err) {
 
+
       setError(
+
         err.response?.data?.message ||
+
         "Failed to accept bid"
+
       );
 
+
     }
+
 
   };
 
 
 
 
+
+
+
+
+
+  // Seller rejects bid
 
   const handleReject = async (bidId) => {
 
+
     try {
+
 
       await rejectBid(bidId);
 
+
       fetchBids();
+
+
 
     } catch (err) {
 
+
       setError(
+
         err.response?.data?.message ||
+
         "Failed to reject bid"
+
       );
+
 
     }
 
+
   };
+
+
+
+
+
 
 
 
 
   if (loading) {
 
+
     return (
+
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
 
+
         <p className="text-gray-500">
+
           Loading offers...
+
         </p>
 
+
       </div>
+
     );
+
 
   }
 
@@ -115,7 +195,12 @@ function BidManagement() {
 
 
 
+
+
+
+
   return (
+
 
     <div className="min-h-screen bg-gray-50 px-6 py-10">
 
@@ -123,19 +208,38 @@ function BidManagement() {
       <div className="max-w-5xl mx-auto">
 
 
+
+
+
+
         <Link
+
           to="/my-listings"
+
           className="text-green-600 hover:underline"
+
         >
+
           ← Back to My Listings
+
         </Link>
 
 
 
 
+
+
+
+
         <h1 className="text-3xl font-bold text-gray-800 mt-6">
+
           Incoming Offers
+
         </h1>
+
+
+
+
 
 
 
@@ -156,15 +260,21 @@ function BidManagement() {
 
 
 
+
+
+
         {bids.length === 0 ? (
 
+
           <div className="bg-white rounded-xl shadow p-8 mt-6 text-center">
+
 
             <h2 className="text-xl font-semibold text-gray-700">
 
               No Offers Yet
 
             </h2>
+
 
             <p className="text-gray-500 mt-2">
 
@@ -176,19 +286,31 @@ function BidManagement() {
           </div>
 
 
+
         ) : (
+
 
 
           <div className="space-y-5 mt-6">
 
 
+
+
+
+
             {bids.map((bid)=>(
 
 
+
               <div
+
                 key={bid._id}
+
                 className="bg-white rounded-xl shadow p-6"
+
               >
+
+
 
 
 
@@ -197,6 +319,7 @@ function BidManagement() {
                   {bid.bidder?.name || "Unknown Buyer"}
 
                 </h2>
+
 
 
 
@@ -211,10 +334,13 @@ function BidManagement() {
 
 
 
+
                 <p className="mt-3">
 
                   <span className="font-semibold">
+
                     Offer Amount:
+
                   </span>{" "}
 
                   ৳{bid.amount}
@@ -225,10 +351,14 @@ function BidManagement() {
 
 
 
+
+
                 <p className="mt-2 text-gray-600">
 
                   <span className="font-semibold">
+
                     Message:
+
                   </span>{" "}
 
                   {bid.message}
@@ -239,10 +369,14 @@ function BidManagement() {
 
 
 
+
+
                 <p className="mt-2">
 
                   <span className="font-semibold">
+
                     Status:
+
                   </span>{" "}
 
                   {bid.status}
@@ -253,14 +387,26 @@ function BidManagement() {
 
 
 
+
+
+
+
                 {bid.status === "Pending" && (
+
+
 
                   <div className="flex gap-4 mt-5">
 
 
+
+
+
                     <button
+
                       onClick={() => handleAccept(bid._id)}
+
                       className="px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+
                     >
 
                       Accept
@@ -269,9 +415,16 @@ function BidManagement() {
 
 
 
+
+
+
+
                     <button
+
                       onClick={() => handleReject(bid._id)}
+
                       className="px-5 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+
                     >
 
                       Reject
@@ -279,33 +432,56 @@ function BidManagement() {
                     </button>
 
 
+
+
+
                   </div>
 
+
+
                 )}
+
+
+
+
 
 
 
               </div>
 
 
+
             ))}
 
 
+
+
+
+
+
           </div>
+
 
 
         )}
 
 
 
+
+
+
+
       </div>
+
 
 
     </div>
 
+
   );
 
 }
+
 
 
 export default BidManagement;
