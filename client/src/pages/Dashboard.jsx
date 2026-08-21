@@ -4,16 +4,15 @@ import { useAuth } from "../context/AuthContext";
 import api from "../api/axios";
 import RequestPickupModal from "./RequestPickupModal";
 import ViewProofModal from "./ViewProofModal";
+import { Link } from "react-router-dom";
 
 const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
 
 export default function Dashboard() {
   const { user } = useAuth();
-  
+
   // 1. Get search params from URL
   const [searchParams] = useSearchParams();
-
-  
 
   // Determine user role
   const isCollector =
@@ -23,17 +22,15 @@ export default function Dashboard() {
 
   // 2. Local activeTab state initialized from URL param (?tab=available or ?tab=assigned)
   const [activeTab, setActiveTab] = useState(
-    searchParams.get("tab") || "available"
+    searchParams.get("tab") || "available",
   );
 
   // 1. Check if user is an Admin/Supervisor
-const isAdmin =
-    user?.role === "admin" ||
-    user?.role === "Admin";
+  const isAdmin = user?.role === "admin" || user?.role === "Admin";
 
-// 2. Add state for the Admin Investigation Modal
-const [investigationData, setInvestigationData] = useState(null);
-const [investigationLoading, setInvestigationLoading] = useState(false);
+  // 2. Add state for the Admin Investigation Modal
+  const [investigationData, setInvestigationData] = useState(null);
+  const [investigationLoading, setInvestigationLoading] = useState(false);
 
   // 3. Keep activeTab in sync when top navbar links are clicked
   useEffect(() => {
@@ -65,8 +62,8 @@ const [investigationLoading, setInvestigationLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState("All");
   const [wasteTypeFilter, setWasteTypeFilter] = useState("All");
 
-//F08
-// Proof Modal State for Collectors
+  //F08
+  // Proof Modal State for Collectors
   const [proofModalOpen, setProofModalOpen] = useState(false);
   const [selectedProofReportId, setSelectedProofReportId] = useState(null);
   const [proofImage, setProofImage] = useState(null);
@@ -97,13 +94,13 @@ const [investigationLoading, setInvestigationLoading] = useState(false);
       setSelectedProofReportId(null);
       fetchReports();
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to submit completion proof.");
+      alert(
+        err.response?.data?.message || "Failed to submit completion proof.",
+      );
     } finally {
       setProofUploading(false);
     }
   };
-
-
 
   // Extract MongoDB ID
   const getMongoId = (idVal) => {
@@ -207,9 +204,7 @@ const [investigationLoading, setInvestigationLoading] = useState(false);
 
       if (isAdmin) {
         response = await api.get("/reports");
-      }
-
-      else if (isCollector) {
+      } else if (isCollector) {
         if (activeTab === "assigned") {
           try {
             response = await api.get("/reports/assigned");
@@ -308,9 +303,9 @@ const [investigationLoading, setInvestigationLoading] = useState(false);
       statusFilter === "All" ||
       (statusFilter === "Disputed" &&
         (item.status === "Disputed" ||
-         item.status === "disputed" ||
-         item.status === "Under Investigation" ||
-         item.isDisputed)) ||
+          item.status === "disputed" ||
+          item.status === "Under Investigation" ||
+          item.isDisputed)) ||
       item.status?.toLowerCase() === statusFilter.toLowerCase();
 
     const matchesType =
@@ -377,25 +372,36 @@ const [investigationLoading, setInvestigationLoading] = useState(false);
     try {
       setInvestigationLoading(true);
       const res = await api.get(`/reports/${reportId}/investigate`);
-      
+
       // Use API response or fallback to local item data if API lacks structure
-      const reportItem = pickups.find((p) => getMongoId(p._id || p.id) === reportId);
-      
+      const reportItem = pickups.find(
+        (p) => getMongoId(p._id || p.id) === reportId,
+      );
+
       setInvestigationData({
         report: res.data?.report || reportItem || {},
-        collectorInfo: res.data?.collectorInfo || res.data?.collector || reportItem?.assignedTo || null,
+        collectorInfo:
+          res.data?.collectorInfo ||
+          res.data?.collector ||
+          reportItem?.assignedTo ||
+          null,
       });
     } catch (err) {
       console.error("Investigation error:", err);
       // Fallback: search local report state so the admin can at least see local card details
-      const reportItem = pickups.find((p) => getMongoId(p._id || p.id) === reportId);
+      const reportItem = pickups.find(
+        (p) => getMongoId(p._id || p.id) === reportId,
+      );
       if (reportItem) {
         setInvestigationData({
           report: reportItem,
           collectorInfo: reportItem.assignedTo || null,
         });
       } else {
-        alert("Failed to load investigation details: " + (err.response?.data?.message || err.message));
+        alert(
+          "Failed to load investigation details: " +
+            (err.response?.data?.message || err.message),
+        );
       }
     } finally {
       setInvestigationLoading(false);
@@ -490,6 +496,17 @@ const [investigationLoading, setInvestigationLoading] = useState(false);
                 </button>
               </div>
             )}
+            {/* Admin: Collector Performance Link */}
+            {isAdmin && (
+              <div className="pt-4">
+                <Link
+                  to="/admin/performance"
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow transition duration-200 inline-flex items-center gap-2"
+                >
+                  <span>📊 Collector Performance</span>
+                </Link>
+              </div>
+            )}
           </div>
 
           <div className="mt-6 md:mt-0 flex flex-col items-center text-center space-y-2 bg-white/40 backdrop-blur-xs p-4 rounded-2xl border border-emerald-100">
@@ -497,13 +514,12 @@ const [investigationLoading, setInvestigationLoading] = useState(false);
               ♻️
             </div>
 
-            <p className="text-xs text-emerald-900 max-w-[180px] font-medium leading-tight">
+            <p className="text-xs text-emerald-900 max-w-45 font-medium leading-tight">
               Transparent price discovery without informal middlemen
             </p>
           </div>
         </section>
 
-        
         {/* Search */}
         <section>
           <div className="relative max-w-md">
@@ -541,7 +557,9 @@ const [investigationLoading, setInvestigationLoading] = useState(false);
                 >
                   <option value="All">Select All</option>
 
-                  <option value="Disputed">🚨 Disputed / Under Investigation</option>
+                  <option value="Disputed">
+                    🚨 Disputed / Under Investigation
+                  </option>
 
                   <option value="assigned">Scheduled / Assigned</option>
 
@@ -591,16 +609,16 @@ const [investigationLoading, setInvestigationLoading] = useState(false);
                 {error}
               </div>
             ) : filteredPickups.length === 0 ? (
-  <div className="text-center py-12 bg-white rounded-2xl border border-gray-100 text-gray-500">
-    {isAdmin
-    ? "No pickup requests found matching current filters."
-      : isCollector
-      ? activeTab === "available"
-        ? "No unassigned pickup requests available right now."
-        : "You do not have any assigned tasks currently."
-      : "No pickup requests found for your account."}
-  </div>
-) : (
+              <div className="text-center py-12 bg-white rounded-2xl border border-gray-100 text-gray-500">
+                {isAdmin
+                  ? "No pickup requests found matching current filters."
+                  : isCollector
+                    ? activeTab === "available"
+                      ? "No unassigned pickup requests available right now."
+                      : "You do not have any assigned tasks currently."
+                    : "No pickup requests found for your account."}
+              </div>
+            ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredPickups.map((item) => {
                   const itemId = getMongoId(item._id || item.id);
@@ -655,7 +673,7 @@ const [investigationLoading, setInvestigationLoading] = useState(false);
                           <strong>Location:</strong>{" "}
                           {item.location?.address || "Address not specified"}
                         </p>
-                      
+
                         {/* Reporter details */}
                         {isCollector &&
                           activeTab === "assigned" &&
@@ -678,21 +696,24 @@ const [investigationLoading, setInvestigationLoading] = useState(false);
                           )}
                       </div>
 
-                     {/* Actions */}
-{isAdmin && (item.status === "Disputed" || item.status === "disputed" || item.isDisputed) ? (
-  <button
-    onClick={() => handleInvestigate(itemId)}
-    disabled={investigationLoading}
-    className="w-full bg-indigo-700 hover:bg-indigo-800 text-white font-semibold py-2.5 rounded-xl text-xs transition cursor-pointer"
-  >
-    🚨 Investigate Details
-  </button>
-) : isAdmin ? (
-  <div className="text-center text-xs text-gray-400 font-medium py-2 bg-gray-50 rounded-lg border border-gray-100">
-    No active disputes
-  </div>
-) : isCollector ? (
-  activeTab === "available" ? (
+                      {/* Actions */}
+                      {isAdmin &&
+                      (item.status === "Disputed" ||
+                        item.status === "disputed" ||
+                        item.isDisputed) ? (
+                        <button
+                          onClick={() => handleInvestigate(itemId)}
+                          disabled={investigationLoading}
+                          className="w-full bg-indigo-700 hover:bg-indigo-800 text-white font-semibold py-2.5 rounded-xl text-xs transition cursor-pointer"
+                        >
+                          🚨 Investigate Details
+                        </button>
+                      ) : isAdmin ? (
+                        <div className="text-center text-xs text-gray-400 font-medium py-2 bg-gray-50 rounded-lg border border-gray-100">
+                          No active disputes
+                        </div>
+                      ) : isCollector ? (
+                        activeTab === "available" ? (
                           <button
                             onClick={() => handleAcceptPickup(itemId)}
                             className="w-full py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs rounded-xl shadow-xs transition cursor-pointer"
@@ -704,6 +725,7 @@ const [investigationLoading, setInvestigationLoading] = useState(false);
                             <div className="text-center text-xs text-emerald-800 font-semibold py-1.5 bg-emerald-100 rounded-lg">
                               ✓ Assigned to You
                             </div>
+
                             <button
                               onClick={() => {
                                 setSelectedProofReportId(itemId);
@@ -715,38 +737,39 @@ const [investigationLoading, setInvestigationLoading] = useState(false);
                             </button>
                           </div>
                         )
-                     ) : item.status === "Completed" || item.status === "Resolved" ? (
-  /* 1. Show View Proof button when job is done */
-  <button
-    onClick={() => setSelectedProofReport(item)}
-    className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-semibold py-2.5 px-4 rounded-xl text-xs transition cursor-pointer"
-  >
-    View Proof of Collection
-  </button>
-) : !isNonModifiableStatus && !isLocked ? (
-  /* 2. Show Reschedule & Cancel if report is active and unlocked */
-  <div className="flex space-x-2 pt-2">
-    <button
-      onClick={() => openRescheduleModal(itemId)}
-      className="w-1/2 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs rounded-lg transition cursor-pointer"
-    >
-      Reschedule
-    </button>
-    <button
-      onClick={() => handleCancel(itemId)}
-      className="w-1/2 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium text-xs rounded-lg transition cursor-pointer"
-    >
-      Cancel
-    </button>
-  </div>
-) : (
-  /* 3. Fallback for locked or cancelled status */
-  <div className="text-center text-xs text-gray-500 font-semibold py-2.5 bg-gray-100 rounded-lg border border-gray-200">
-    {isNonModifiableStatus
-      ? `Request ${item.status}`
-      : "🔒 Locked (< 4h remaining)"}
-  </div>
-)}
+                      ) : item.status === "Completed" ||
+                        item.status === "Resolved" ? (
+                        /* 1. Show View Proof button when job is done */
+                        <button
+                          onClick={() => setSelectedProofReport(item)}
+                          className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-semibold py-2.5 px-4 rounded-xl text-xs transition cursor-pointer"
+                        >
+                          View Proof of Collection
+                        </button>
+                      ) : !isNonModifiableStatus && !isLocked ? (
+                        /* 2. Show Reschedule & Cancel if report is active and unlocked */
+                        <div className="flex space-x-2 pt-2">
+                          <button
+                            onClick={() => openRescheduleModal(itemId)}
+                            className="w-1/2 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs rounded-lg transition cursor-pointer"
+                          >
+                            Reschedule
+                          </button>
+                          <button
+                            onClick={() => handleCancel(itemId)}
+                            className="w-1/2 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium text-xs rounded-lg transition cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        /* 3. Fallback for locked or cancelled status */
+                        <div className="text-center text-xs text-gray-500 font-semibold py-2.5 bg-gray-100 rounded-lg border border-gray-200">
+                          {isNonModifiableStatus
+                            ? `Request ${item.status}`
+                            : "🔒 Locked (< 4h remaining)"}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -892,20 +915,23 @@ const [investigationLoading, setInvestigationLoading] = useState(false);
           </div>
         </div>
       )}
-     {/* --- ADD THIS RIGHT HERE --- */}
+      {/* --- ADD THIS RIGHT HERE --- */}
       {selectedProofReport && (
         <ViewProofModal
           report={selectedProofReport}
           onClose={() => setSelectedProofReport(null)}
         />
       )}
-    {/* Admin Investigation Modal */}
+      {/* Admin Investigation Modal */}
       {investigationData && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl space-y-4">
             <div className="flex justify-between items-center border-b border-gray-100 pb-3">
               <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                🚨 Investigation Details — #{getMongoId(investigationData.report?._id || investigationData.report?.id)?.slice(-6)}
+                🚨 Investigation Details — #
+                {getMongoId(
+                  investigationData.report?._id || investigationData.report?.id,
+                )?.slice(-6)}
               </h3>
               <button
                 onClick={() => setInvestigationData(null)}
@@ -918,35 +944,49 @@ const [investigationLoading, setInvestigationLoading] = useState(false);
             <div className="bg-red-50 p-4 rounded-xl border border-red-200 space-y-1">
               <p className="text-xs font-bold text-red-900">Dispute Details:</p>
               <p className="text-xs text-red-800">
-                <strong>Status:</strong> {investigationData.report?.status || "Under Investigation"}
+                <strong>Status:</strong>{" "}
+                {investigationData.report?.status || "Under Investigation"}
               </p>
               <p className="text-xs text-red-800">
-                <strong>Reporter Name:</strong> {investigationData.report?.reportedBy?.name || "N/A"}
+                <strong>Reporter Name:</strong>{" "}
+                {investigationData.report?.reportedBy?.name || "N/A"}
               </p>
               <p className="text-xs text-red-800">
-                <strong>Reporter Phone:</strong> {investigationData.report?.reportedBy?.phone || "N/A"}
+                <strong>Reporter Phone:</strong>{" "}
+                {investigationData.report?.reportedBy?.phone || "N/A"}
               </p>
               <p className="text-xs text-red-800">
-                <strong>Reason / Notes:</strong> "{investigationData.report?.disputeDetails?.reason || investigationData.report?.description || "No specific dispute reason supplied."}"
+                <strong>Reason / Notes:</strong> "
+                {investigationData.report?.disputeDetails?.reason ||
+                  investigationData.report?.description ||
+                  "No specific dispute reason supplied."}
+                "
               </p>
             </div>
 
             <div className="bg-blue-50 p-4 rounded-xl border border-blue-200 space-y-1.5">
-              <p className="text-xs font-bold text-blue-900">Assigned Collector Info:</p>
+              <p className="text-xs font-bold text-blue-900">
+                Assigned Collector Info:
+              </p>
               {investigationData.collectorInfo ? (
                 <>
                   <p className="text-xs text-gray-800">
-                    <strong>Name:</strong> {investigationData.collectorInfo.name || "N/A"}
+                    <strong>Name:</strong>{" "}
+                    {investigationData.collectorInfo.name || "N/A"}
                   </p>
                   <p className="text-xs text-gray-800">
-                    <strong>Phone:</strong> {investigationData.collectorInfo.phone || "Not provided"}
+                    <strong>Phone:</strong>{" "}
+                    {investigationData.collectorInfo.phone || "Not provided"}
                   </p>
                   <p className="text-xs text-gray-800">
-                    <strong>Email:</strong> {investigationData.collectorInfo.email || "N/A"}
+                    <strong>Email:</strong>{" "}
+                    {investigationData.collectorInfo.email || "N/A"}
                   </p>
                 </>
               ) : (
-                <p className="text-xs text-gray-500 italic">No assigned collector found for this task.</p>
+                <p className="text-xs text-gray-500 italic">
+                  No assigned collector found for this task.
+                </p>
               )}
             </div>
 

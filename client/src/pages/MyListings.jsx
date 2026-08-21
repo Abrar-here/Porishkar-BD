@@ -49,9 +49,7 @@ function MyListings() {
     try {
       const res = await api.patch(`/listings/${id}/sold`);
       setListings((currentListings) =>
-        currentListings.map((listing) =>
-          listing._id === id ? { ...listing, status: "Sold" } : listing,
-        ),
+        currentListings.filter((listing) => listing._id !== id),
       );
       if (res.data.ecoPoints) {
         alert(

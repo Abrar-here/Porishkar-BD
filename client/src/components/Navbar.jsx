@@ -1,5 +1,6 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import NotificationBell from "./NotificationBell";
 
 function Navbar() {
   const { user, logout } = useAuth();
@@ -27,6 +28,7 @@ function Navbar() {
     { to: "/eco-points", label: "Eco Points" },
     { to: "/leaderboard", label: "Leaderboard" },
     { to: "/achievements", label: "Achievements" },
+    { to: "/heatmap", label: "Hotspot Map" },
   ];
 
   // inside Navbar.jsx
@@ -46,9 +48,12 @@ function Navbar() {
   const adminLinks = [
     { to: "/dashboard", label: "Dashboard" },
     { to: "/admin/reports", label: "All Reports" },
+    { to: "/admin/reports/queue", label: "Priority Queue" },
     { to: "/admin/users", label: "Users" },
     { to: "/recycling-centres", label: "Recycling Centres" },
     { to: "/admin/routes", label: "Collector Routes" },
+    { to: "/admin/analytics", label: "Analytics" },
+    { to: "/heatmap", label: "Hotspot Map" },
   ];
 
   const getLinks = () => {
@@ -89,6 +94,8 @@ function Navbar() {
         </div>
 
         <div className="flex items-center gap-3">
+          {user && <NotificationBell />}
+
           {user && (
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center shrink-0">

@@ -259,6 +259,20 @@ function AdminRoutes() {
             </div>
 
             {/* Ordered stop list with reorder controls */}
+            {route.some(
+              (s) =>
+                s.isPriority &&
+                !["Resolved", "Closed", "Cancelled"].includes(s.status),
+            ) && (
+              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3">
+                <span className="text-red-700 text-lg">🚨</span>
+                <p className="text-sm text-red-700 font-medium">
+                  This route contains priority stops from escalated hotspot
+                  clusters. Consider moving them to the top using the reorder
+                  controls.
+                </p>
+              </div>
+            )}
             <div className="bg-white rounded-xl shadow divide-y divide-gray-100">
               {route.map((stop, index) => (
                 <div key={stop._id} className="p-4 flex items-center gap-4">
@@ -267,9 +281,19 @@ function AdminRoutes() {
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-800 truncate">
-                      {stop.caseReference} — {stop.category}
-                    </p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-medium text-gray-800">
+                        {stop.caseReference} — {stop.category}
+                      </p>
+                      {stop.isPriority &&
+                        !["Resolved", "Closed", "Cancelled"].includes(
+                          stop.status,
+                        ) && (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 bg-red-100 text-red-700 rounded-full border border-red-200 shrink-0">
+                            🚨 Priority
+                          </span>
+                        )}
+                    </div>
                     <p className="text-sm text-gray-500 truncate">
                       {stop.location.address}
                     </p>

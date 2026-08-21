@@ -37,6 +37,12 @@ const wasteReportSchema = new mongoose.Schema(
         trim: true,
       },
     },
+
+    collectorLocation: {
+      lat: { type: Number, default: null },
+      lng: { type: Number, default: null },
+      updatedAt: { type: Date, default: null },
+    },
     // Optional — F05 fills these, F01 does not
     pickupDate: {
       type: Date,
@@ -54,6 +60,13 @@ const wasteReportSchema = new mongoose.Schema(
     routeOrder: {
       type: Number,
       default: null,
+    },
+    // F04 — set to true when an admin escalates a hotspot cluster
+    // this report belongs to. Surfaces the report as high-priority
+    // elsewhere in the admin tooling (e.g. route views, report lists).
+    isPriority: {
+      type: Boolean,
+      default: false,
     },
 
     images: {
@@ -103,6 +116,43 @@ const wasteReportSchema = new mongoose.Schema(
         enum: ["Pending", "Under Investigation", "Resolved", "Dismissed"],
         default: "Pending",
       },
+    },
+    // ─── F02: Issue Priority & Auto-Categorization Engine ──────────────
+    estimatedVolume: {
+      type: String,
+      enum: ["Small", "Medium", "Large"],
+      default: "Medium",
+    },
+    priority: {
+      type: String,
+      enum: ["Low", "Medium", "High", "Critical"],
+      default: "Low",
+    },
+    // true once an admin has manually overridden the system-suggested
+    // priority — kept separate from priorityHistory so the UI can
+    // quickly show "this was manually adjusted" without reading the log
+    priorityOverridden: {
+      type: Boolean,
+      default: false,
+    },
+    // Every priority change (the initial auto-assignment, plus any
+    // admin override) gets appended here — this is the "activity log"
+    // the assignment describes.
+    priorityHistory: {
+      type: [
+        {
+          priority: { type: String, required: true },
+          changedBy: {
+            type: String,
+            enum: ["system", "admin"],
+            required: true,
+          },
+          admin: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+          reason: { type: String, default: "" },
+          changedAt: { type: Date, default: Date.now },
+        },
+      ],
+      default: [],
     },
   },
   {
