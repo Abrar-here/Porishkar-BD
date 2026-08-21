@@ -8,6 +8,7 @@ function ReportForm() {
   const [form, setForm] = useState({
     category: "",
     description: "",
+    estimatedVolume: "Medium",
     location: {
       lat: 23.8103,
       lng: 90.4125,
@@ -45,6 +46,7 @@ function ReportForm() {
       formData.append("pickupDate", new Date().toISOString());
       formData.append("category", form.category);
       formData.append("description", form.description);
+      formData.append("estimatedVolume", form.estimatedVolume);
       formData.append("location", JSON.stringify(form.location));
       images.forEach((img) => formData.append("images", img));
 
@@ -98,6 +100,26 @@ function ReportForm() {
               <option value="Construction">Construction</option>
               <option value="Water Body Pollution">Water Body Pollution</option>
             </select>
+          </div>
+
+          {/* Estimated volume */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Estimated waste volume
+            </label>
+            <select
+              name="estimatedVolume"
+              value={form.estimatedVolume}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+            >
+              <option value="Small">Small — a bag or two</option>
+              <option value="Medium">Medium — several bags</option>
+              <option value="Large">Large — overflowing or bulky</option>
+            </select>
+            <p className="text-xs text-gray-400 mt-1">
+              Helps us prioritize larger issues faster.
+            </p>
           </div>
 
           {/* Description */}

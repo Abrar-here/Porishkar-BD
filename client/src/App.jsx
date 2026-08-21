@@ -12,6 +12,7 @@ import MyReports from "./pages/MyReports";
 import EcoPoints from "./pages/EcoPoints";
 import Leaderboard from "./pages/Leaderboard";
 import Achievements from "./pages/Achievements";
+import NotificationSettings from "./pages/NotificationSettings";
 
 import Marketplace from "./pages/Marketplace";
 import CreateListing from "./pages/CreateListing";
@@ -27,6 +28,8 @@ import AdminAnalytics from "./pages/AdminAnalytics";
 import HotspotHeatmap from "./pages/HotspotHeatmap";
 import AdminReports from "./pages/AdminReports";
 
+import AdminReportQueue from "./pages/AdminReportQueue";
+import AdminPerformanceDashboard from "./pages/AdminPerformanceDashboard";
 import Navbar from "./components/Navbar";
 
 // Layout for logged-in pages
@@ -94,6 +97,11 @@ function App() {
 
         <Route path="/achievements" element={<Achievements />} />
 
+        <Route
+          path="/notification-settings"
+          element={<NotificationSettings />}
+        />
+
         {/* F09 Marketplace */}
         <Route path="/marketplace" element={<Marketplace />} />
 
@@ -110,9 +118,16 @@ function App() {
         <Route path="/recycling-centres/add" element={<AddRecyclingCentre />} />
 
         <Route
+          path="/admin/performance"
+          element={<AdminPerformanceDashboard />}
+        />
+
+        <Route
           path="/recycling-centres/:id/edit"
           element={<EditRecyclingCentre />}
         />
+        <Route path="/admin/reports" element={<AdminReportQueue />} />
+
         <Route path="/admin/routes" element={<AdminRoutes />} />
         <Route path="/my-route" element={<CollectorRoute />} />
         <Route path="/admin/analytics" element={<AdminAnalytics />} />
