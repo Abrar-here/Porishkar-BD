@@ -15,6 +15,7 @@ export default function RequestPickupModal({ isOpen, onClose, onRequestSuccess }
   const [pickupTime, setPickupTime] = useState("09:00"); // Time input state
   const [address, setAddress] = useState("");
   const [category, setCategory] = useState("Household");
+  const [estimatedVolume, setEstimatedVolume] = useState("Medium");
   const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -26,6 +27,7 @@ export default function RequestPickupModal({ isOpen, onClose, onRequestSuccess }
       setPickupTime("09:00");
       setAddress("");
       setCategory("Household");
+      setEstimatedVolume("Medium");
       setDescription("");
       setError("");
       setSmsPreview("");
@@ -79,6 +81,7 @@ export default function RequestPickupModal({ isOpen, onClose, onRequestSuccess }
 
       const payload = {
         category,
+        estimatedVolume,
         description: description || `Scheduled for ${pickupDate} at ${formattedTimeString}`,
         location: JSON.stringify(locationObj),
         pickupDate: combinedDateTime.toISOString(), // Standardized ISO timestamp
@@ -195,6 +198,22 @@ export default function RequestPickupModal({ isOpen, onClose, onRequestSuccess }
                 <option value="Medical">Medical</option>
                 <option value="Construction">Construction</option>
                 <option value="Water Body Pollution">Water Body Pollution</option>
+              </select>
+            </div>
+
+            {/* Estimated Volume */}
+            <div>
+              <label className="block text-sm font-bold text-gray-800 mb-2">
+                Estimated Waste Volume
+              </label>
+              <select
+                value={estimatedVolume}
+                onChange={(e) => setEstimatedVolume(e.target.value)}
+                className="w-full bg-[#f4f7f4] border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+              >
+                <option value="Small">Small — a bag or two</option>
+                <option value="Medium">Medium — several bags</option>
+                <option value="Large">Large — overflowing or bulky</option>
               </select>
             </div>
 

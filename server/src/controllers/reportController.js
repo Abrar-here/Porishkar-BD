@@ -3,7 +3,12 @@ import Counter from "../models/Counter.js";
 import { sendSms } from "../services/smsService.js";
 import { awardPoints } from "../services/ecoPointsService.js";
 import User from "../models/User.js";
-
+import {
+  calculatePriority,
+  NEARBY_RADIUS_KM,
+  UNRESOLVED_STATUSES,
+} from "../services/priorityService.js";
+import { notifyUser, ALERT_TYPES } from "../services/notificationService.js";
 const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
 
 const isWithinFourHourCutoff = (pickupDate) => {
@@ -50,10 +55,28 @@ const generateCaseReference = async () => {
   return `PBD-${year}-${padded}`;
 };
 
+// ─── F02: counts unresolved reports within NEARBY_RADIUS_KM of a point.
+// Reuses the same Haversine distance function already defined below in
+// this file for route optimization (calculateDistance) — no new
+// geospatial index needed since report volumes are small.
+const countNearbyUnresolvedReports = async (lat, lng) => {
+  const candidates = await WasteReport.find({
+    status: { $in: UNRESOLVED_STATUSES },
+    "location.lat": { $exists: true },
+    "location.lng": { $exists: true },
+  }).select("location");
+
+  return candidates.filter(
+    (r) =>
+      calculateDistance(lat, lng, r.location.lat, r.location.lng) <=
+      NEARBY_RADIUS_KM,
+  ).length;
+};
+
 // ─── F01: no pickupDate/pickupTime needed ──────────────────
 export const createReport = async (req, res) => {
   try {
-    const { category, description, location } = req.body;
+    const { category, description, location, estimatedVolume } = req.body;
 
     if (!category || !description || !location) {
       return res.status(400).json({
@@ -78,6 +101,20 @@ export const createReport = async (req, res) => {
     const images = req.files ? req.files.map((file) => file.path) : [];
     const caseReference = await generateCaseReference();
 
+    // F02: work out how urgent this report is before saving it
+    const volume = ["Small", "Medium", "Large"].includes(estimatedVolume)
+      ? estimatedVolume
+      : "Medium";
+    const nearbyCount = await countNearbyUnresolvedReports(
+      parsedLocation.lat,
+      parsedLocation.lng,
+    );
+    const { priority } = calculatePriority({
+      category,
+      estimatedVolume: volume,
+      nearbyCount,
+    });
+
     const report = await WasteReport.create({
       reportedBy: req.user._id,
       category,
@@ -85,6 +122,9 @@ export const createReport = async (req, res) => {
       location: parsedLocation,
       images,
       caseReference,
+      estimatedVolume: volume,
+      priority,
+      priorityHistory: [{ priority, changedBy: "system" }],
     });
 
     let ecoPointsResult = null;
@@ -110,6 +150,8 @@ export const createReport = async (req, res) => {
         location: report.location,
         images: report.images,
         status: report.status,
+        estimatedVolume: report.estimatedVolume,
+        priority: report.priority,
         createdAt: report.createdAt,
       },
     });
@@ -121,7 +163,7 @@ export const createReport = async (req, res) => {
 // ─── F05: requires pickupDate/pickupTime ──────────────────
 export const createPickupRequest = async (req, res) => {
   try {
-    const { category, description, location, pickupDate, pickupTime } =
+    const { category, description, location, pickupDate, pickupTime, estimatedVolume } =
       req.body;
 
     if (!category || !description || !location || !pickupDate || !pickupTime) {
@@ -159,6 +201,20 @@ export const createPickupRequest = async (req, res) => {
     const images = req.files ? req.files.map((file) => file.path) : [];
     const caseReference = await generateCaseReference();
 
+    // F02: same priority calculation as F01's createReport
+    const volume = ["Small", "Medium", "Large"].includes(estimatedVolume)
+      ? estimatedVolume
+      : "Medium";
+    const nearbyCount = await countNearbyUnresolvedReports(
+      parsedLocation.lat,
+      parsedLocation.lng,
+    );
+    const { priority } = calculatePriority({
+      category,
+      estimatedVolume: volume,
+      nearbyCount,
+    });
+
     const report = await WasteReport.create({
       reportedBy: req.user._id,
       category,
@@ -168,6 +224,9 @@ export const createPickupRequest = async (req, res) => {
       caseReference,
       pickupDate: parsedPickupDate,
       pickupTime,
+      estimatedVolume: volume,
+      priority,
+      priorityHistory: [{ priority, changedBy: "system" }],
     });
 
     const smsMessage = `Booking confirmed! Your pickup (Ref: ${caseReference}) is scheduled for ${parsedPickupDate.toDateString()} at ${pickupTime}.`;
@@ -175,6 +234,18 @@ export const createPickupRequest = async (req, res) => {
       await sendSms(req.user.phone, smsMessage);
     } catch (smsError) {
       console.error("Booking confirmation SMS failed:", smsError.message);
+    }
+
+    // F15: pickup confirmation notification (in-app + email)
+    try {
+      await notifyUser(req.user._id, ALERT_TYPES.PICKUP_CONFIRMATION, {
+        title: "Pickup booking confirmed",
+        message: `Your pickup (Ref: ${caseReference}) is scheduled for ${parsedPickupDate.toDateString()} at ${pickupTime}.`,
+        link: "/my-reports",
+        emailHtml: `<h2>Booking confirmed</h2><p>Your pickup (Ref: <strong>${caseReference}</strong>) is scheduled for <strong>${parsedPickupDate.toDateString()} at ${pickupTime}</strong>.</p>`,
+      });
+    } catch (notifyError) {
+      console.error("Pickup confirmation notification failed:", notifyError.message);
     }
 
     let ecoPointsResult = null;
@@ -203,6 +274,8 @@ export const createPickupRequest = async (req, res) => {
         status: report.status,
         pickupDate: report.pickupDate,
         pickupTime: report.pickupTime,
+        estimatedVolume: report.estimatedVolume,
+        priority: report.priority,
         createdAt: report.createdAt,
       },
     });
@@ -338,6 +411,24 @@ export const acceptReport = async (req, res) => {
     report.status = "Assigned";
     report.assignedCollector = req.user._id;
     await report.save();
+
+    // F15: two separate notifications — the collector gets a "new
+    // assignment" ping, the citizen gets a "status update"
+    try {
+      await notifyUser(req.user._id, ALERT_TYPES.NEW_ASSIGNMENT, {
+        title: "New pickup assigned to you",
+        message: `You've been assigned pickup ${report.caseReference}.`,
+        link: "/dashboard?tab=assigned",
+      });
+      await notifyUser(report.reportedBy, ALERT_TYPES.REPORT_STATUS_UPDATE, {
+        title: "Your report has been assigned",
+        message: `A collector has been assigned to your report ${report.caseReference}.`,
+        link: "/my-reports",
+      });
+    } catch (notifyError) {
+      console.error("Assignment notification failed:", notifyError.message);
+    }
+
     res
       .status(200)
       .json({ message: "Pickup assigned to you successfully!", report });
@@ -387,8 +478,20 @@ export const completePickupWithProof = async (req, res) => {
       },
     };
 
-    report.status = "Resolved"; // or "Resolved" depending on your app standard
+        report.status = "Resolved"; // or "Resolved" depending on your app standard
     await report.save();
+
+    // F15: let the citizen know their report was resolved. The eco
+    // points credit below triggers its own separate notification.
+    try {
+      await notifyUser(report.reportedBy, ALERT_TYPES.REPORT_STATUS_UPDATE, {
+        title: "Your pickup has been completed",
+        message: `Report ${report.caseReference} has been marked resolved, with photo proof of collection.`,
+        link: "/my-reports",
+      });
+    } catch (notifyError) {
+      console.error("Completion notification failed:", notifyError.message);
+    }
 
     // Eco points go to the CITIZEN who requested the pickup, not the
     // collector — the collector is only the one triggering the event.
@@ -684,12 +787,23 @@ export const reorderRoute = async (req, res) => {
       });
     }
 
-    // Assign sequence positions in the order the supervisor specified.
+        // Assign sequence positions in the order the supervisor specified.
     await Promise.all(
       orderedReportIds.map((reportId, index) =>
         WasteReport.findByIdAndUpdate(reportId, { routeOrder: index }),
       ),
     );
+
+    // F15: let the collector know their route just changed
+    try {
+      await notifyUser(collectorId, ALERT_TYPES.ROUTE_UPDATE, {
+        title: "Your route has been updated",
+        message: `Your pickup order for ${orderedReportIds.length} stop(s) has been reorganized by an admin.`,
+        link: "/dashboard?tab=assigned",
+      });
+    } catch (notifyError) {
+      console.error("Route update notification failed:", notifyError.message);
+    }
 
     res.status(200).json({ message: "Route reordered successfully" });
   } catch (error) {
@@ -722,6 +836,73 @@ export const resetRouteOrder = async (req, res) => {
     res.status(200).json({
       message: "Route reset — the suggested order will be used again",
     });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// @desc    Admin manually overrides a report's system-suggested priority.
+//          Every override is appended to priorityHistory for a permanent
+//          record of who changed it, from what, to what, and why.
+// @route   PUT /api/reports/:id/priority
+// @access  Private (admin)
+export const overridePriority = async (req, res) => {
+  try {
+    const { priority, reason } = req.body;
+    const validPriorities = ["Low", "Medium", "High", "Critical"];
+
+    if (!priority || !validPriorities.includes(priority)) {
+      return res.status(400).json({
+        message: `priority must be one of: ${validPriorities.join(", ")}`,
+      });
+    }
+
+    const report = await WasteReport.findById(req.params.id);
+    if (!report) {
+      return res.status(404).json({ message: "Report not found." });
+    }
+
+    report.priority = priority;
+    report.priorityOverridden = true;
+    report.priorityHistory.push({
+      priority,
+      changedBy: "admin",
+      admin: req.user._id,
+      reason: reason || "",
+    });
+
+    await report.save();
+
+    res.status(200).json({
+      message: "Priority updated successfully",
+      report,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// @desc    Get all reports for the admin priority queue, Critical first.
+//          Reuses getAllReports' data but sorts by urgency instead of
+//          just creation date.
+// @route   GET /api/reports/priority-queue
+// @access  Private (admin)
+export const getPriorityQueue = async (req, res) => {
+  try {
+    const priorityOrder = { Critical: 0, High: 1, Medium: 2, Low: 3 };
+
+    const reports = await WasteReport.find()
+      .populate("reportedBy", "name email phone")
+      .sort({ createdAt: -1 });
+
+    // Sort in JS rather than the database — the priority order isn't
+    // alphabetical, and the report volume here is small enough that
+    // this is simpler than a $addFields/$switch aggregation.
+    reports.sort(
+      (a, b) => priorityOrder[a.priority] - priorityOrder[b.priority],
+    );
+
+    res.status(200).json({ reports });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }

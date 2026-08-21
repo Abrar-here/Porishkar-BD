@@ -2,6 +2,7 @@ import PointActivity from "../models/PointActivity.js";
 import Badge from "../models/Badge.js";
 import UserBadge from "../models/UserBadge.js";
 import User from "../models/User.js";
+import { notifyUser, ALERT_TYPES } from "./notificationService.js";
 
 // ─── Points awarded per activity ───
 export const POINTS_TABLE = {
@@ -86,6 +87,13 @@ export const awardPoints = async (userId, activityType) => {
   });
 
   await evaluateBadges(user);
+
+  // F15: notify the user their points balance just went up
+  await notifyUser(user._id, ALERT_TYPES.ECO_POINTS_CREDIT, {
+    title: "You earned eco points!",
+    message: `+${def.points} points for "${def.label}". Your new balance is ${user.ecoPoints}.`,
+    link: "/eco-points",
+  });
 
   return { activity, newBalance: user.ecoPoints };
 };

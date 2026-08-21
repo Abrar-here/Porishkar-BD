@@ -104,6 +104,43 @@ const wasteReportSchema = new mongoose.Schema(
         default: "Pending",
       },
     },
+    // ─── F02: Issue Priority & Auto-Categorization Engine ──────────────
+    estimatedVolume: {
+      type: String,
+      enum: ["Small", "Medium", "Large"],
+      default: "Medium",
+    },
+    priority: {
+      type: String,
+      enum: ["Low", "Medium", "High", "Critical"],
+      default: "Low",
+    },
+    // true once an admin has manually overridden the system-suggested
+    // priority — kept separate from priorityHistory so the UI can
+    // quickly show "this was manually adjusted" without reading the log
+    priorityOverridden: {
+      type: Boolean,
+      default: false,
+    },
+    // Every priority change (the initial auto-assignment, plus any
+    // admin override) gets appended here — this is the "activity log"
+    // the assignment describes.
+    priorityHistory: {
+      type: [
+        {
+          priority: { type: String, required: true },
+          changedBy: {
+            type: String,
+            enum: ["system", "admin"],
+            required: true,
+          },
+          admin: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+          reason: { type: String, default: "" },
+          changedAt: { type: Date, default: Date.now },
+        },
+      ],
+      default: [],
+    },
   },
   {
     timestamps: true,

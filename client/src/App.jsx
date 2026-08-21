@@ -23,7 +23,7 @@ import RecyclingCentres from "./pages/RecyclingCentres";
 import EditRecyclingCentre from "./pages/EditRecyclingCentre";
 import AdminRoutes from "./pages/AdminRoutes";
 import CollectorRoute from "./pages/CollectorRoute";
-
+import AdminReportQueue from "./pages/AdminReportQueue";
 import Navbar from "./components/Navbar";
 
 // Layout for logged-in pages
@@ -110,6 +110,8 @@ function App() {
           path="/recycling-centres/:id/edit"
           element={<EditRecyclingCentre />}
         />
+        <Route path="/admin/reports" element={<AdminReportQueue />} />
+
         <Route path="/admin/routes" element={<AdminRoutes />} />
         <Route path="/my-route" element={<CollectorRoute />} />
       </Route>
