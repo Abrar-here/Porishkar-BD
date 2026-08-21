@@ -726,3 +726,34 @@ export const resetRouteOrder = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+//F07: Maisara
+export const updateCollectorLocation = async (req, res) => {
+  try {
+    const { lat, lng, status } = req.body;
+
+    const updateData = {
+      "collectorLocation.lat": lat,
+      "collectorLocation.lng": lng,
+      "collectorLocation.updatedAt": new Date(),
+    };
+
+    if (status) {
+      updateData.status = status;
+    }
+
+    const report = await WasteReport.findByIdAndUpdate(
+      req.params.id,
+      { $set: updateData },
+      { new: true }
+    );
+
+    if (!report) {
+      return res.status(404).json({ message: "Report not found" });
+    }
+
+    res.status(200).json({ success: true, report });
+  } catch (error) {
+    res.status(500).json({ message: "Error updating location", error: error.message });
+  }
+};

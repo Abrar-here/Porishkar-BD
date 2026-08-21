@@ -37,6 +37,12 @@ const wasteReportSchema = new mongoose.Schema(
         trim: true,
       },
     },
+
+    collectorLocation: {
+      lat: { type: Number, default: null },
+      lng: { type: Number, default: null },
+      updatedAt: { type: Date, default: null },
+    },
     // Optional — F05 fills these, F01 does not
     pickupDate: {
       type: Date,
