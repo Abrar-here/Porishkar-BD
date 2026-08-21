@@ -1,111 +1,73 @@
-// import express from "express";
+import express from "express";
 
-// import {
+import {
 
-//     createMerchant,
-//     getMerchants,
-//     getAllMerchants,
-//     updateMerchant,
-//     deleteMerchant
+    getMerchants,
 
-// } from "../controllers/merchantController.js";
+    createMerchant,
 
+    updateMerchant,
 
-// import { protect } from "../middlewares/authMiddleware.js";
+    deleteMerchant
 
-// import { adminOnly } from "../middlewares/adminMiddleware.js";
+} from "../controllers/merchantController.js";
 
 
+import { protect } from "../middlewares/authMiddleware.js";
 
-// const router = express.Router();
 
+const router = express.Router();
 
 
 
-// // Citizen view directory
+// Public merchant directory
 
-// router.get(
+router.get(
 
-//     "/",
+    "/",
 
-//     protect,
+    getMerchants
 
-//     getMerchants
+);
 
-// );
 
 
+// Admin merchant management
 
+router.post(
 
+    "/",
 
-// // Admin create
+    protect,
 
-// router.post(
+    createMerchant
 
-//     "/",
+);
 
-//     protect,
 
-//     adminOnly,
 
-//     createMerchant
+router.put(
 
-// );
+    "/:id",
 
+    protect,
 
+    updateMerchant
 
+);
 
 
-// // Admin view all
 
-// router.get(
+router.delete(
 
-//     "/admin/all",
+    "/:id",
 
-//     protect,
+    protect,
 
-//     adminOnly,
+    deleteMerchant
 
-//     getAllMerchants
+);
 
-// );
 
 
-
-
-
-// // Admin update
-
-// router.put(
-
-//     "/:id",
-
-//     protect,
-
-//     adminOnly,
-
-//     updateMerchant
-
-// );
-
-
-
-
-
-// // Admin delete
-
-// router.delete(
-
-//     "/:id",
-
-//     protect,
-
-//     adminOnly,
-
-//     deleteMerchant
-
-// );
-
-
-
-// export default router;
+export default router;

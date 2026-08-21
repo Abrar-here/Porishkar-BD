@@ -13,6 +13,10 @@ import badgeRoutes from "./routes/badgeRoutes.js";
 
 import transactionRoutes from "./routes/transactionRoutes.js";
 
+import merchantRoutes from "./routes/merchantRoutes.js";
+import rewardRoutes from "./routes/rewardRoutes.js";
+import redemptionRoutes from "./routes/redemptionRoutes.js";
+
 
 const app = express();
 
@@ -32,7 +36,7 @@ app.use(
 
 app.use(
     express.urlencoded({
-        extended: true
+        extended:true
     })
 );
 
@@ -50,6 +54,7 @@ app.use(
 
 
 
+
 // ================================
 // Recycling Centres
 // ================================
@@ -58,6 +63,7 @@ app.use(
     "/api/centres",
     centreRoutes
 );
+
 
 
 
@@ -84,8 +90,45 @@ app.use(
 
 
 
+
 // ================================
-// Bid & Offer System (F10)
+// F19 Merchant Directory
+// ================================
+
+app.use(
+    "/api/merchants",
+    merchantRoutes
+);
+
+
+
+
+// ================================
+// F19 Reward Management
+// ================================
+
+app.use(
+    "/api/rewards",
+    rewardRoutes
+);
+
+
+
+
+// ================================
+// F19 Redemption System
+// ================================
+
+app.use(
+    "/api/redemptions",
+    redemptionRoutes
+);
+
+
+
+
+// ================================
+// F10 Bid System
 // ================================
 
 app.use(
@@ -95,14 +138,16 @@ app.use(
 
 
 
+
 // ================================
-// F11 Transaction + SSLCommerz
+// F11 Transaction + Payment
 // ================================
 
 app.use(
     "/api/transactions",
     transactionRoutes
 );
+
 
 
 
@@ -117,6 +162,7 @@ app.use(
 
 
 
+
 // ================================
 // Reports
 // ================================
@@ -128,13 +174,14 @@ app.use(
 
 
 
+
 // ================================
 // Health Check
 // ================================
 
 app.get(
     "/api/health",
-    (req, res)=>{
+    (req,res)=>{
 
         res.status(200).json({
 
@@ -151,12 +198,13 @@ app.get(
 
 
 
+
 // ================================
 // Error Handler
 // ================================
 
 app.use(
-    (err, req, res, next)=>{
+    (err,req,res,next)=>{
 
         console.error(err);
 

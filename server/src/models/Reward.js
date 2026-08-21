@@ -1,112 +1,112 @@
-// import mongoose from "mongoose";
+import mongoose from "mongoose";
 
 
-// const rewardSchema = new mongoose.Schema(
+const rewardSchema = new mongoose.Schema(
 
-// {
+{
 
-//     title: {
+    title: {
 
-//         type: String,
+        type: String,
 
-//         required: true
+        required: true
 
-//     },
-
-
-//     type: {
-
-//         type: String,
-
-//         enum:[
-
-//             "Mobile Recharge",
-
-//             "Voucher",
-
-//             "Pickup Discount"
-
-//         ],
-
-//         required:true
-
-//     },
+    },
 
 
-//     pointsRequired: {
+    type: {
 
-//         type:Number,
+        type: String,
 
-//         required:true
+        enum:[
 
-//     },
+            "Mobile Recharge",
 
+            "Voucher",
 
-//     value: {
+            "Pickup Discount"
 
-//         type:String,
+        ],
 
-//         required:true
+        required:true
 
-//     },
-
-
-//     merchant: {
-
-//         type: mongoose.Schema.Types.ObjectId,
-
-//         ref:"Merchant"
-
-//     },
+    },
 
 
-//     stock: {
+    pointsRequired: {
 
-//         type:Number,
+        type:Number,
 
-//         default:0
+        required:true
 
-//     },
-
-
-//     expiryDate: {
-
-//         type:Date
-
-//     },
+    },
 
 
-//     status: {
+    value: {
 
-//         type:String,
+        type:String,
 
-//         enum:[
+        required:true
 
-//             "Active",
-
-//             "Inactive"
-
-//         ],
-
-//         default:"Active"
-
-//     }
+    },
 
 
-// },
+    merchant: {
 
-// {
+        type: mongoose.Schema.Types.ObjectId,
 
-//     timestamps:true
+        ref:"Merchant"
 
-// }
-
-
-// );
+    },
 
 
+    stock: {
 
-// export default mongoose.model(
-//     "Reward",
-//     rewardSchema
-// );
+        type:Number,
+
+        default:0
+
+    },
+
+
+    expiryDate: {
+
+        type:Date
+
+    },
+
+
+    status: {
+
+        type:String,
+
+        enum:[
+
+            "Active",
+
+            "Inactive"
+
+        ],
+
+        default:"Active"
+
+    }
+
+
+},
+
+{
+
+    timestamps:true
+
+}
+
+
+);
+
+
+
+export default mongoose.model(
+    "Reward",
+    rewardSchema
+);

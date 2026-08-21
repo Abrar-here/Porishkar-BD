@@ -1,19 +1,25 @@
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
-
 import { useAuth } from "./context/AuthContext";
+
 
 import Register from "./pages/Register";
 import Login from "./pages/Login";
 import VerifyOtp from "./pages/VerifyOtp";
 import ForgotPassword from "./pages/ForgotPassword";
 
+
 import Dashboard from "./pages/Dashboard";
 import ReportForm from "./pages/ReportForm";
 import MyReports from "./pages/MyReports";
 
+
 import EcoPoints from "./pages/EcoPoints";
+import RewardCentre from "./pages/RewardCentre";
+import MerchantDirectory from "./pages/MerchantDirectory";
+import AdminMerchantManagement from "./pages/AdminMerchantManagement";
 import Leaderboard from "./pages/Leaderboard";
 import Achievements from "./pages/Achievements";
+
 
 import Marketplace from "./pages/Marketplace";
 import CreateListing from "./pages/CreateListing";
@@ -21,27 +27,33 @@ import ListingDetails from "./pages/ListingDetails";
 import MyListings from "./pages/MyListings";
 import EditListing from "./pages/EditListing";
 
+
 import BidManagement from "./pages/BidManagement";
 import MyOffers from "./pages/MyOffers";
 
+
 import Payment from "./pages/Payment";
 import PaymentSuccess from "./pages/PaymentSuccess";
+
 
 import AddRecyclingCentre from "./pages/AddRecyclingCentre";
 import RecyclingCentres from "./pages/RecyclingCentres";
 import EditRecyclingCentre from "./pages/EditRecyclingCentre";
 
+
 import Navbar from "./components/Navbar";
 
 
 
+
 // Protected Layout
-function ProtectedLayout() {
+
+function ProtectedLayout(){
 
   const { user } = useAuth();
 
 
-  if (!user) {
+  if(!user){
 
     return <Navigate to="/login" />;
 
@@ -63,19 +75,19 @@ function ProtectedLayout() {
 
 
 
-function App() {
+
+function App(){
 
 
   const { user, loading } = useAuth();
 
 
 
-
-  if (loading) {
+  if(loading){
 
     return (
 
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="flex items-center justify-center min-h-screen">
 
         <p className="text-gray-500">
           Loading...
@@ -91,26 +103,21 @@ function App() {
 
 
 
+
   return (
 
     <Routes>
 
 
 
-      {/* Default */}
-
       <Route
 
         path="/"
 
         element={
-
           <Navigate
-
             to={user ? "/dashboard" : "/login"}
-
           />
-
         }
 
       />
@@ -123,64 +130,43 @@ function App() {
 
 
       <Route
-
         path="/register"
-
         element={
-
           user ? <Navigate to="/dashboard" /> : <Register />
-
         }
-
       />
 
 
-
       <Route
-
         path="/login"
-
         element={
-
           user ? <Navigate to="/dashboard" /> : <Login />
-
         }
-
       />
 
 
-
       <Route
-
         path="/verify-otp"
-
         element={<VerifyOtp />}
-
       />
 
 
-
       <Route
-
         path="/forgot-password"
-
         element={<ForgotPassword />}
-
       />
 
 
 
 
 
-      {/* SSLCommerz Payment Success */}
+      {/* Payment Success */}
 
       <Route
-
         path="/payment-success"
-
         element={<PaymentSuccess />}
-
       />
+
 
 
 
@@ -190,80 +176,73 @@ function App() {
 
       {/* Protected Routes */}
 
-
       <Route element={<ProtectedLayout />}>
 
 
 
-        {/* Dashboard */}
-
         <Route
-
           path="/dashboard"
-
           element={<Dashboard />}
-
         />
 
 
 
-
-
-        {/* Reports */}
-
-
         <Route
-
           path="/report"
-
           element={<ReportForm />}
-
         />
 
 
-
         <Route
-
           path="/my-reports"
-
           element={<MyReports />}
-
         />
 
 
 
 
 
-
-        {/* Eco Features */}
+        {/* F19 Eco System */}
 
 
         <Route
-
           path="/eco-points"
-
           element={<EcoPoints />}
+        />
 
+
+        <Route
+          path="/reward-centre"
+          element={<RewardCentre />}
+        />
+
+
+        <Route
+          path="/merchant-directory"
+          element={<MerchantDirectory />}
         />
 
 
 
-        <Route
+        {/* Admin Merchant Management */}
 
+        <Route
+          path="/admin/merchants"
+          element={<AdminMerchantManagement />}
+        />
+
+
+
+
+        <Route
           path="/leaderboard"
-
           element={<Leaderboard />}
-
         />
 
 
-
         <Route
-
           path="/achievements"
-
           element={<Achievements />}
-
         />
 
 
@@ -274,53 +253,33 @@ function App() {
 
         {/* Marketplace */}
 
-
         <Route
-
           path="/marketplace"
-
           element={<Marketplace />}
-
         />
 
 
-
         <Route
-
           path="/marketplace/create"
-
           element={<CreateListing />}
-
         />
 
 
-
         <Route
-
           path="/marketplace/:id"
-
           element={<ListingDetails />}
-
         />
 
 
-
         <Route
-
           path="/my-listings"
-
           element={<MyListings />}
-
         />
 
 
-
         <Route
-
           path="/my-listings/:id/edit"
-
           element={<EditListing />}
-
         />
 
 
@@ -331,23 +290,15 @@ function App() {
 
         {/* F10 Bid System */}
 
-
         <Route
-
           path="/my-offers"
-
           element={<MyOffers />}
-
         />
 
 
-
         <Route
-
           path="/my-listings/:id/offers"
-
           element={<BidManagement />}
-
         />
 
 
@@ -358,13 +309,9 @@ function App() {
 
         {/* F11 Payment */}
 
-
         <Route
-
           path="/payment/:transactionId"
-
           element={<Payment />}
-
         />
 
 
@@ -375,34 +322,23 @@ function App() {
 
         {/* Recycling Centres */}
 
-
         <Route
-
           path="/recycling-centres"
-
           element={<RecyclingCentres />}
-
         />
 
 
-
         <Route
-
           path="/recycling-centres/add"
-
           element={<AddRecyclingCentre />}
-
         />
-
 
 
         <Route
-
           path="/recycling-centres/:id/edit"
-
           element={<EditRecyclingCentre />}
-
         />
+
 
 
 
@@ -416,19 +352,14 @@ function App() {
 
       {/* Invalid Route */}
 
-
       <Route
 
         path="*"
 
         element={
-
           <Navigate
-
             to={user ? "/dashboard" : "/login"}
-
           />
-
         }
 
       />

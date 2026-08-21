@@ -1,294 +1,234 @@
-// import Merchant from "../models/Merchant.js";
+import Merchant from "../models/Merchant.js";
 
 
 
-// // ================================
-// // Admin Create Merchant
-// // ================================
+// ================================
+// Get all merchants
+// ================================
 
-// export const createMerchant = async(req,res)=>{
+export const getMerchants = async (req,res)=>{
 
-//     try{
+    try{
 
 
-//         const merchant = await Merchant.create(req.body);
+        const merchants = await Merchant.find({
 
+            status:"active"
 
+        }).sort({
 
-//         res.status(201).json({
+            createdAt:-1
 
-//             success:true,
+        });
 
-//             message:"Merchant created successfully",
 
-//             merchant
 
-//         });
+        res.status(200).json({
 
+            success:true,
 
+            count:merchants.length,
 
-//     }catch(error){
+            merchants
 
+        });
 
-//         res.status(500).json({
 
-//             success:false,
+    }catch(error){
 
-//             message:"Failed to create merchant",
+        res.status(500).json({
 
-//             error:error.message
+            success:false,
 
-//         });
+            message:"Failed to fetch merchants",
 
+            error:error.message
 
-//     }
+        });
 
-// };
+    }
 
+};
 
 
 
 
-// // ================================
-// // Get Active Merchants
-// // Citizen + Admin
-// // ================================
 
-// export const getMerchants = async(req,res)=>{
+// ================================
+// Create merchant (Admin)
+// ================================
 
-//     try{
+export const createMerchant = async(req,res)=>{
 
+    try{
 
-//         const merchants = await Merchant.find({
 
-//             status:"Active"
+        const merchant = await Merchant.create({
 
-//         })
+            ...req.body,
 
-//         .sort({
+            createdBy:req.user._id
 
-//             createdAt:-1
+        });
 
-//         });
 
 
+        res.status(201).json({
 
-//         res.status(200).json({
+            success:true,
 
-//             success:true,
+            message:"Merchant added successfully",
 
-//             count:merchants.length,
+            merchant
 
-//             merchants
+        });
 
-//         });
 
 
+    }catch(error){
 
-//     }catch(error){
 
+        res.status(500).json({
 
-//         res.status(500).json({
+            success:false,
 
-//             success:false,
+            message:"Failed to create merchant",
 
-//             message:"Failed to get merchants",
+            error:error.message
 
-//             error:error.message
+        });
 
-//         });
 
+    }
 
-//     }
+};
 
-// };
 
 
 
 
+// ================================
+// Update merchant (Admin)
+// ================================
 
+export const updateMerchant = async(req,res)=>{
 
-// // ================================
-// // Admin Get All Merchants
-// // ================================
+    try{
 
-// export const getAllMerchants = async(req,res)=>{
 
-//     try{
+        const merchant = await Merchant.findByIdAndUpdate(
 
+            req.params.id,
 
-//         const merchants =
-//             await Merchant.find()
-//             .sort({
+            req.body,
 
-//                 createdAt:-1
+            {
+                new:true
+            }
 
-//             });
+        );
 
 
 
-//         res.json({
+        if(!merchant){
 
-//             success:true,
+            return res.status(404).json({
 
-//             merchants
+                success:false,
 
-//         });
+                message:"Merchant not found"
 
+            });
 
+        }
 
-//     }catch(error){
 
 
-//         res.status(500).json({
+        res.status(200).json({
 
-//             success:false,
+            success:true,
 
-//             message:error.message
+            merchant
 
-//         });
+        });
 
 
-//     }
 
-// };
+    }catch(error){
 
+        res.status(500).json({
 
+            success:false,
 
+            message:"Failed to update merchant",
 
+            error:error.message
 
+        });
 
+    }
 
-// // ================================
-// // Admin Update Merchant
-// // ================================
+};
 
-// export const updateMerchant = async(req,res)=>{
 
 
-//     try{
 
 
-//         const merchant =
-//             await Merchant.findByIdAndUpdate(
+// ================================
+// Delete merchant (Admin)
+// ================================
 
-//                 req.params.id,
+export const deleteMerchant = async(req,res)=>{
 
-//                 req.body,
+    try{
 
-//                 {
 
-//                     new:true
+        const merchant = await Merchant.findByIdAndDelete(
 
-//                 }
+            req.params.id
 
-//             );
+        );
 
 
 
-//         if(!merchant){
+        if(!merchant){
 
-//             return res.status(404).json({
+            return res.status(404).json({
 
-//                 success:false,
+                success:false,
 
-//                 message:"Merchant not found"
+                message:"Merchant not found"
 
-//             });
+            });
 
-//         }
+        }
 
 
 
-//         res.json({
+        res.status(200).json({
 
-//             success:true,
+            success:true,
 
-//             message:"Merchant updated",
+            message:"Merchant deleted"
 
-//             merchant
+        });
 
-//         });
 
 
+    }catch(error){
 
-//     }catch(error){
 
+        res.status(500).json({
 
-//         res.status(500).json({
+            success:false,
 
-//             success:false,
+            message:"Failed to delete merchant",
 
-//             message:error.message
+            error:error.message
 
-//         });
+        });
 
 
-//     }
+    }
 
-
-// };
-
-
-
-
-
-
-
-// // ================================
-// // Admin Delete Merchant
-// // ================================
-
-// export const deleteMerchant = async(req,res)=>{
-
-
-//     try{
-
-
-//         const merchant =
-//             await Merchant.findByIdAndDelete(
-//                 req.params.id
-//             );
-
-
-
-//         if(!merchant){
-
-//             return res.status(404).json({
-
-//                 success:false,
-
-//                 message:"Merchant not found"
-
-//             });
-
-//         }
-
-
-
-//         res.json({
-
-//             success:true,
-
-//             message:"Merchant deleted"
-
-//         });
-
-
-
-//     }catch(error){
-
-
-//         res.status(500).json({
-
-//             success:false,
-
-//             message:error.message
-
-//         });
-
-
-//     }
-
-
-// };
+};

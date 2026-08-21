@@ -1,83 +1,83 @@
-// import mongoose from "mongoose";
+import mongoose from "mongoose";
 
 
-// const redemptionSchema = new mongoose.Schema(
+const redemptionSchema = new mongoose.Schema(
 
-// {
+{
 
-//     user: {
+    user: {
 
-//         type:mongoose.Schema.Types.ObjectId,
+        type:mongoose.Schema.Types.ObjectId,
 
-//         ref:"User",
+        ref:"User",
 
-//         required:true
+        required:true
 
-//     },
-
-
-//     reward: {
-
-//         type:mongoose.Schema.Types.ObjectId,
-
-//         ref:"Reward",
-
-//         required:true
-
-//     },
+    },
 
 
-//     pointsUsed: {
+    reward: {
 
-//         type:Number,
+        type:mongoose.Schema.Types.ObjectId,
 
-//         required:true
+        ref:"Reward",
 
-//     },
+        required:true
 
-
-//     voucherCode: {
-
-//         type:String
-
-//     },
+    },
 
 
-//     status: {
+    pointsUsed: {
 
-//         type:String,
+        type:Number,
 
-//         enum:[
+        required:true
 
-//             "Pending",
-
-//             "Approved",
-
-//             "Completed",
-
-//             "Rejected"
-
-//         ],
-
-//         default:"Pending"
-
-//     }
+    },
 
 
-// },
+    voucherCode: {
 
-// {
+        type:String
 
-//     timestamps:true
-
-// }
+    },
 
 
-// );
+    status: {
+
+        type:String,
+
+        enum:[
+
+            "Pending",
+
+            "Approved",
+
+            "Completed",
+
+            "Rejected"
+
+        ],
+
+        default:"Pending"
+
+    }
+
+
+},
+
+{
+
+    timestamps:true
+
+}
+
+
+);
 
 
 
-// export default mongoose.model(
-//     "Redemption",
-//     redemptionSchema
-// );
+export default mongoose.model(
+    "Redemption",
+    redemptionSchema
+);

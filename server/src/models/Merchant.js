@@ -1,92 +1,134 @@
-// import mongoose from "mongoose";
+import mongoose from "mongoose";
 
 
-// const merchantSchema = new mongoose.Schema(
+const merchantSchema = new mongoose.Schema(
 
-//     {
+    {
 
-//         name: {
+        name: {
 
-//             type: String,
+            type: String,
 
-//             required: true,
+            required: true,
 
-//             trim: true
+            trim: true
 
-//         },
-
-
-//         category: {
-
-//             type: String,
-
-//             required: true
-
-//         },
+        },
 
 
-//         description: {
+        category: {
 
-//             type: String
+            type: String,
 
-//         },
+            required: true,
 
+            enum: [
 
-//         location: {
+                "organic_food",
 
-//             type: String,
+                "solar_products",
 
-//             required: true
+                "eco_store",
 
-//         },
+                "other"
 
+            ]
 
-//         contact: {
-
-//             type: String
-
-//         },
+        },
 
 
-//         voucherStock: {
+        description: {
 
-//             type: Number,
+            type: String,
 
-//             default: 0
+            default: ""
 
-//         },
-
-
-//         status: {
-
-//             type: String,
-
-//             enum: [
-
-//                 "Active",
-
-//                 "Inactive"
-
-//             ],
-
-//             default: "Active"
-
-//         }
+        },
 
 
-//     },
+        location: {
 
-//     {
+            type: String,
 
-//         timestamps: true
+            required: true
 
-//     }
-
-// );
+        },
 
 
+        contactEmail: {
 
-// export default mongoose.model(
-//     "Merchant",
-//     merchantSchema
-// );
+            type: String,
+
+            default: ""
+
+        },
+
+
+        phone: {
+
+            type: String,
+
+            default: ""
+
+        },
+
+
+        voucherStock: {
+
+            type: Number,
+
+            default: 0
+
+        },
+
+
+        voucherValue: {
+
+            type: Number,
+
+            default: 0
+
+        },
+
+
+        status: {
+
+            type: String,
+
+            enum: [
+
+                "active",
+
+                "inactive"
+
+            ],
+
+            default: "active"
+
+        },
+
+
+        createdBy: {
+
+            type: mongoose.Schema.Types.ObjectId,
+
+            ref: "User"
+
+        }
+
+    },
+
+    {
+
+        timestamps: true
+
+    }
+
+);
+
+
+
+export default mongoose.model(
+    "Merchant",
+    merchantSchema
+);
