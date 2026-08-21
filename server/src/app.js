@@ -1,32 +1,278 @@
 import express from "express";
 import cors from "cors";
+
+
 import authRoutes from "./routes/authRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
 import listingRoutes from "./routes/listingRoutes.js";
 import centreRoutes from "./routes/centreRoutes.js";
+import bidRoutes from "./routes/bidRoutes.js";
+
+
 import ecoPointsRoutes from "./routes/ecoPointsRoutes.js";
 import leaderboardRoutes from "./routes/leaderboardRoutes.js";
 import badgeRoutes from "./routes/badgeRoutes.js";
+
+
+import transactionRoutes from "./routes/transactionRoutes.js";
+
+
+import merchantRoutes from "./routes/merchantRoutes.js";
+import rewardRoutes from "./routes/rewardRoutes.js";
+import redemptionRoutes from "./routes/redemptionRoutes.js";
+
+
+// Existing demo branch features
+
 import analyticsRoutes from "./routes/analyticsRoutes.js";
 import heatmapRoutes from "./routes/heatmapRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
+
+
+
 const app = express();
+
+
+
+// ================================
+// Middleware
+// ================================
+
 app.use(cors());
+
 app.use(express.json());
-app.use("/api/listings", listingRoutes);
-app.use("/api/heatmap", heatmapRoutes);
-app.use("/api/analytics", analyticsRoutes);
-app.use("/api/centres", centreRoutes);
-app.use("/api/ecopoints", ecoPointsRoutes);
-app.use("/api/leaderboard", leaderboardRoutes);
-app.use("/api/badges", badgeRoutes);
-app.use("/api/admin", adminRoutes);
-app.use("/api/notifications", notificationRoutes);
-app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", message: "PorishkarBD API is running" });
-});
-app.use("/api/auth", authRoutes);
-app.use("/api/reports", reportRoutes);
+
+app.use(
+    express.urlencoded({
+        extended:true
+    })
+);
+
+
+
+
+// ================================
+// Marketplace
+// ================================
+
+app.use(
+    "/api/listings",
+    listingRoutes
+);
+
+
+
+
+// ================================
+// Heatmap & Analytics
+// ================================
+
+app.use(
+    "/api/heatmap",
+    heatmapRoutes
+);
+
+
+app.use(
+    "/api/analytics",
+    analyticsRoutes
+);
+
+
+
+
+// ================================
+// Recycling Centres
+// ================================
+
+app.use(
+    "/api/centres",
+    centreRoutes
+);
+
+
+
+
+// ================================
+// Eco Points
+// ================================
+
+app.use(
+    "/api/ecopoints",
+    ecoPointsRoutes
+);
+
+
+app.use(
+    "/api/leaderboard",
+    leaderboardRoutes
+);
+
+
+app.use(
+    "/api/badges",
+    badgeRoutes
+);
+
+
+
+
+// ================================
+// Admin
+// ================================
+
+app.use(
+    "/api/admin",
+    adminRoutes
+);
+
+
+
+
+// ================================
+// Notifications
+// ================================
+
+app.use(
+    "/api/notifications",
+    notificationRoutes
+);
+
+
+
+
+// ================================
+// F19 Merchant Directory
+// ================================
+
+app.use(
+    "/api/merchants",
+    merchantRoutes
+);
+
+
+
+
+// ================================
+// F19 Reward Management
+// ================================
+
+app.use(
+    "/api/rewards",
+    rewardRoutes
+);
+
+
+
+
+// ================================
+// F19 Redemption
+// ================================
+
+app.use(
+    "/api/redemptions",
+    redemptionRoutes
+);
+
+
+
+
+// ================================
+// F10 Bid System
+// ================================
+
+app.use(
+    "/api/bids",
+    bidRoutes
+);
+
+
+
+
+// ================================
+// F11 Transaction
+// ================================
+
+app.use(
+    "/api/transactions",
+    transactionRoutes
+);
+
+
+
+
+// ================================
+// Authentication
+// ================================
+
+app.use(
+    "/api/auth",
+    authRoutes
+);
+
+
+
+
+// ================================
+// Reports
+// ================================
+
+app.use(
+    "/api/reports",
+    reportRoutes
+);
+
+
+
+
+// ================================
+// Health Check
+// ================================
+
+app.get(
+    "/api/health",
+    (req,res)=>{
+
+        res.status(200).json({
+
+            success:true,
+
+            status:"ok",
+
+            message:"PorishkarBD API is running"
+
+        });
+
+    }
+);
+
+
+
+
+// ================================
+// Error Handler
+// ================================
+
+app.use(
+    (err,req,res,next)=>{
+
+        console.error(err);
+
+
+        res.status(500).json({
+
+            success:false,
+
+            message:"Server Error",
+
+            error:err.message
+
+        });
+
+    }
+);
+
+
 
 export default app;
