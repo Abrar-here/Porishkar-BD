@@ -1,5 +1,6 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import NotificationBell from "./NotificationBell";
 
 function Navbar() {
   const { user, logout } = useAuth();
@@ -89,6 +90,8 @@ function Navbar() {
         </div>
 
         <div className="flex items-center gap-3">
+          {user && <NotificationBell />}
+
           {user && (
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center shrink-0">

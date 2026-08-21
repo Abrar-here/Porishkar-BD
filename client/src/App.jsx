@@ -12,6 +12,7 @@ import MyReports from "./pages/MyReports";
 import EcoPoints from "./pages/EcoPoints";
 import Leaderboard from "./pages/Leaderboard";
 import Achievements from "./pages/Achievements";
+import NotificationSettings from "./pages/NotificationSettings";
 
 import Marketplace from "./pages/Marketplace";
 import CreateListing from "./pages/CreateListing";
@@ -91,6 +92,8 @@ function App() {
         <Route path="/leaderboard" element={<Leaderboard />} />
 
         <Route path="/achievements" element={<Achievements />} />
+
+        <Route path="/notification-settings" element={<NotificationSettings />} />
 
         {/* F09 Marketplace */}
         <Route path="/marketplace" element={<Marketplace />} />
