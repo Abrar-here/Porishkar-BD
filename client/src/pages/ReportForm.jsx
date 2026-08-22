@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
+import LocationPickerMap from "../components/LocationPickerMap";
 
 function ReportForm() {
   const navigate = useNavigate();
@@ -10,8 +11,8 @@ function ReportForm() {
     description: "",
     estimatedVolume: "Medium",
     location: {
-      lat: 23.8103,
-      lng: 90.4125,
+      lat: null,
+      lng: null,
       address: "",
     },
   });
@@ -24,11 +25,25 @@ function ReportForm() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleLocationChange = (e) => {
-    setForm({
-      ...form,
-      location: { ...form.location, address: e.target.value },
-    });
+  // Called by LocationPickerMap when citizen clicks/drags the pin
+  const handleLocationPick = (lat, lng, address) => {
+    setForm((prev) => ({
+      ...prev,
+      location: {
+        lat,
+        lng,
+        address:
+          prev.location.address.trim() === "" ? address : prev.location.address,
+      },
+    }));
+  };
+
+  // Allow manual address editing after pin drop
+  const handleAddressChange = (e) => {
+    setForm((prev) => ({
+      ...prev,
+      location: { ...prev.location, address: e.target.value },
+    }));
   };
 
   const handleImageChange = (e) => {
@@ -40,10 +55,21 @@ function ReportForm() {
 
   const handleSubmit = async () => {
     setError("");
+
+    // Validate location — must have dropped a pin
+    if (!form.location.lat || !form.location.lng) {
+      setError("Please drop a pin on the map to set the location.");
+      return;
+    }
+
+    if (!form.location.address.trim()) {
+      setError("Please confirm or enter the address.");
+      return;
+    }
+
     setSubmitting(true);
     try {
       const formData = new FormData();
-      formData.append("pickupDate", new Date().toISOString());
       formData.append("category", form.category);
       formData.append("description", form.description);
       formData.append("estimatedVolume", form.estimatedVolume);
@@ -137,22 +163,54 @@ function ReportForm() {
             />
           </div>
 
-          {/* Location */}
+          {/* Location — interactive map pin drop */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Location address
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Location — click the map to pin the issue
             </label>
-            <input
-              type="text"
-              value={form.location.address}
-              onChange={handleLocationChange}
-              placeholder="e.g. Mirpur 10, Dhaka"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
-            <p className="text-xs text-gray-400 mt-1">
-              GPS coordinates are set automatically. Google Maps integration
-              coming soon.
-            </p>
+            <LocationPickerMap onLocationPick={handleLocationPick} />
+
+            {/* Show coordinates after pin drop */}
+            {form.location.lat && form.location.lng && (
+              <div className="mt-2 grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Latitude (auto-filled)
+                  </label>
+                  <input
+                    type="text"
+                    value={form.location.lat.toFixed(6)}
+                    readOnly
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-600"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Longitude (auto-filled)
+                  </label>
+                  <input
+                    type="text"
+                    value={form.location.lng.toFixed(6)}
+                    readOnly
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-600"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Address — auto-filled from map, editable */}
+            <div className="mt-3">
+              <label className="block text-xs text-gray-500 mb-1">
+                Address (auto-filled — you can edit for clarity)
+              </label>
+              <input
+                type="text"
+                value={form.location.address}
+                onChange={handleAddressChange}
+                placeholder="Drop a pin on the map to auto-fill the address"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            </div>
           </div>
 
           {/* Photo upload */}
