@@ -23,3 +23,60 @@ export const sendEmail = async ({ to, subject, html }) => {
     return { success: false, error: error.message };
   }
 };
+
+// import { Resend } from "resend";
+
+// const resend = process.env.RESEND_API_KEY
+//   ? new Resend(process.env.RESEND_API_KEY)
+//   : null;
+
+// export const sendEmail = async ({ to, subject, html }) => {
+
+//   try {
+
+//     if (!resend) {
+
+//       console.log("Email skipped (no RESEND_API_KEY):", {
+//         to,
+//         subject
+//       });
+
+//       return {
+//         success:false,
+//         message:"Email service not configured"
+//       };
+
+//     }
+
+//     const result = await resend.emails.send({
+
+//       from:"PorishkarBD <onboarding@resend.dev>",
+
+//       to,
+
+//       subject,
+
+//       html,
+
+//     });
+
+//     return {
+//       success:true,
+//       result
+//     };
+
+//   } catch(error){
+
+//     console.error(
+//       "Email send failed:",
+//       error.message
+//     );
+
+//     return {
+//       success:false,
+//       error:error.message
+//     };
+
+//   }
+
+// };
