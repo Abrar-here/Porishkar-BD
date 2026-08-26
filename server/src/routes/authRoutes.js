@@ -29,6 +29,4 @@ router.put("/location", protect, authorize("collector"), updateMyLocation);
 router.get("/users", protect, authorize("admin"), getAllUsers);
 router.put("/users/:id/status", protect, authorize("admin"), updateUserStatus);
 
-router.stack.forEach((r) => console.log(r.route?.path));
-
 export default router;
