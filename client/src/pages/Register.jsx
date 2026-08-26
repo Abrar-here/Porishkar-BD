@@ -38,9 +38,9 @@ function Register() {
 
       // 2. Extract error message or default to generic
       setError(
-        err.response?.data?.message || 
-        err.response?.data?.error || 
-        "Registration failed. Please check inputs or network connection."
+        err.response?.data?.message ||
+          err.response?.data?.error ||
+          "Registration failed. Please check inputs or network connection.",
       );
     } finally {
       setSubmitting(false);
@@ -106,7 +106,6 @@ function Register() {
             <option value="citizen">Citizen</option>
             <option value="collector">Waste Collector</option>
             <option value="recycling_company">Recycling Company</option>
-            <option value="admin">Admin</option>
           </select>
 
           <button
