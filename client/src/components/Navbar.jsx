@@ -2,408 +2,234 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import NotificationBell from "./NotificationBell";
 
-
 function Navbar() {
-
-
   const { user, logout } = useAuth();
 
   const navigate = useNavigate();
 
   const location = useLocation();
 
-
-
   const handleLogout = () => {
-
     logout();
 
     navigate("/login");
-
   };
 
-
-
-
   const isActive = (path) =>
-
     location.pathname.startsWith(path)
-
       ? "text-green-600 font-semibold border-b-2 border-green-600 pb-0.5"
-
       : "text-gray-600 hover:text-green-600 transition-colors";
-
-
-
-
-
 
   // Citizen / Buyer / Seller
 
   const citizenLinks = [
+    { to: "/dashboard", label: "Dashboard" },
 
-    { to:"/dashboard", label:"Dashboard" },
+    { to: "/marketplace", label: "Marketplace" },
 
-    { to:"/marketplace", label:"Marketplace" },
+    { to: "/my-listings", label: "My Listings" },
 
-    { to:"/my-listings", label:"My Listings" },
+    { to: "/my-offers", label: "My Offers" },
 
-    { to:"/my-offers", label:"My Offers" },
+    { to: "/report", label: "Report Waste" },
 
-    { to:"/report", label:"Report Waste" },
+    { to: "/my-reports", label: "My Reports" },
 
-    { to:"/my-reports", label:"My Reports" },
+    { to: "/recycling-centres", label: "Recycling Centres" },
 
-    { to:"/recycling-centres", label:"Recycling Centres" },
+    { to: "/eco-points", label: "Eco Points" },
 
-    { to:"/eco-points", label:"Eco Points" },
+    { to: "/reward-centre", label: "Reward Centre" },
 
-    { to:"/reward-centre", label:"Reward Centre" },
+    { to: "/merchant-directory", label: "Merchant Directory" },
 
-    { to:"/merchant-directory", label:"Merchant Directory" },
+    { to: "/leaderboard", label: "Leaderboard" },
 
-    { to:"/leaderboard", label:"Leaderboard" },
+    { to: "/achievements", label: "Achievements" },
 
-    { to:"/achievements", label:"Achievements" },
-
-    { to:"/heatmap", label:"Hotspot Map" },
-
+    { to: "/heatmap", label: "Hotspot Map" },
   ];
-
-
-
-
-
-
 
   // Collector
 
   const collectorLinks = [
-
-    { 
-      to:"/dashboard?tab=available", 
-      label:"Available Pickups" 
-    },
-
-    { 
-      to:"/dashboard?tab=assigned", 
-      label:"My Pickups" 
+    {
+      to: "/dashboard?tab=available",
+      label: "Available Pickups",
     },
 
     {
-      to:"/my-route",
-      label:"My Route"
-    }
+      to: "/dashboard?tab=assigned",
+      label: "My Pickups",
+    },
 
+    {
+      to: "/my-route",
+      label: "My Route",
+    },
   ];
-
-
-
-
-
-
 
   // Recycling Company
-
   const recyclingLinks = [
-
     {
-      to:"/dashboard",
-      label:"Dashboard"
+      to: "/dashboard",
+      label: "Dashboard",
     },
-
     {
-      to:"/marketplace",
-      label:"Marketplace"
+      to: "/marketplace",
+      label: "Marketplace",
     },
-
     {
-      to:"/my-listings",
-      label:"My Listings"
+      to: "/my-listings",
+      label: "My Listings",
     },
-
     {
-      to:"/merchant-directory",
-      label:"Merchant Directory"
-    }
-
+      to: "/my-offers",
+      label: "My Offers",
+    },
+    {
+      to: "/merchant-directory",
+      label: "Merchant Directory",
+    },
   ];
-
-
-
-
-
-
-
 
   // Admin
 
   const adminLinks = [
-
     {
-      to:"/dashboard",
-      label:"Dashboard"
+      to: "/dashboard",
+      label: "Dashboard",
     },
 
     {
-      to:"/admin/reports",
-      label:"All Reports"
+      to: "/admin/reports",
+      label: "All Reports",
     },
 
     {
-      to:"/admin/reports/queue",
-      label:"Priority Queue"
+      to: "/admin/reports/queue",
+      label: "Priority Queue",
     },
 
     {
-      to:"/admin/users",
-      label:"Users"
+      to: "/admin/users",
+      label: "Users",
     },
 
     {
-      to:"/recycling-centres",
-      label:"Recycling Centres"
+      to: "/recycling-centres",
+      label: "Recycling Centres",
     },
 
     {
-      to:"/merchant-directory",
-      label:"Merchant Directory"
+      to: "/merchant-directory",
+      label: "Merchant Directory",
     },
 
     {
-      to:"/admin/merchants",
-      label:"Merchant Management"
+      to: "/admin/merchants",
+      label: "Merchant Management",
     },
 
     {
-      to:"/admin/routes",
-      label:"Collector Routes"
+      to: "/admin/routes",
+      label: "Collector Routes",
     },
 
     {
-      to:"/admin/analytics",
-      label:"Analytics"
+      to: "/admin/analytics",
+      label: "Analytics",
     },
 
     {
-      to:"/heatmap",
-      label:"Hotspot Map"
-    }
-
+      to: "/heatmap",
+      label: "Hotspot Map",
+    },
   ];
 
-
-
-
-
-
-
-
   const getLinks = () => {
-
-
     const role = user?.role?.toLowerCase();
 
-
-
-    switch(role){
-
-
+    switch (role) {
       case "citizen":
 
       case "buyer":
 
       case "seller":
-
         return citizenLinks;
 
-
-
       case "collector":
-
         return collectorLinks;
-
-
 
       case "recycling_company":
 
       case "recycling company":
-
         return recyclingLinks;
 
-
-
       case "admin":
-
         return adminLinks;
 
-
-
       default:
-
         return citizenLinks;
-
     }
-
   };
 
+  return (
+    <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+        {/* Logo */}
 
+        <Link to="/dashboard" className="text-xl font-bold text-green-600">
+          PorishkarBD
+        </Link>
 
+        {/* Navigation */}
 
+        <div className="hidden md:flex items-center gap-5">
+          {getLinks().map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className={`text-sm ${isActive(link.to)}`}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
 
+        {/* User */}
 
+        <div className="flex items-center gap-3">
+          {user && <NotificationBell />}
 
-return (
+          {user && (
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                <span className="text-green-700 text-xs font-bold">
+                  {user.name?.charAt(0).toUpperCase()}
+                </span>
+              </div>
 
-<nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
+              <div className="hidden md:block">
+                <p className="text-xs font-medium text-gray-800">{user.name}</p>
 
+                <p className="text-xs text-gray-400 capitalize">
+                  {user.role?.replace("_", " ")}
+                </p>
+              </div>
+            </div>
+          )}
 
-<div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
-
-
-
-{/* Logo */}
-
-<Link
-
-to="/dashboard"
-
-className="text-xl font-bold text-green-600"
-
->
-
-PorishkarBD
-
-</Link>
-
-
-
-
-
-
-
-{/* Navigation */}
-
-<div className="hidden md:flex items-center gap-5">
-
-
-{
-
-getLinks().map((link)=>(
-
-
-<Link
-
-key={link.to}
-
-to={link.to}
-
-className={`text-sm ${isActive(link.to)}`}
-
->
-
-{link.label}
-
-</Link>
-
-
-))
-
+          <button
+            onClick={handleLogout}
+            className="px-3 py-1.5 bg-red-50 text-red-600 text-sm rounded-lg hover:bg-red-100 border border-red-100"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
+    </nav>
+  );
 }
-
-
-</div>
-
-
-
-
-
-
-
-{/* User */}
-
-<div className="flex items-center gap-3">
-
-
-{user && <NotificationBell />}
-
-
-
-{user && (
-
-<div className="flex items-center gap-2">
-
-
-<div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-
-<span className="text-green-700 text-xs font-bold">
-
-{user.name?.charAt(0).toUpperCase()}
-
-</span>
-
-</div>
-
-
-
-
-<div className="hidden md:block">
-
-
-<p className="text-xs font-medium text-gray-800">
-
-{user.name}
-
-</p>
-
-
-<p className="text-xs text-gray-400 capitalize">
-
-{user.role?.replace("_"," ")}
-
-</p>
-
-
-</div>
-
-
-</div>
-
-)}
-
-
-
-
-
-
-
-<button
-
-onClick={handleLogout}
-
-className="px-3 py-1.5 bg-red-50 text-red-600 text-sm rounded-lg hover:bg-red-100 border border-red-100"
-
->
-
-Logout
-
-</button>
-
-
-
-</div>
-
-
-
-</div>
-
-
-</nav>
-
-);
-
-
-}
-
 
 export default Navbar;

@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import api from "../api/axios";
 import RequestPickupModal from "./RequestPickupModal";
 import ViewProofModal from "./ViewProofModal";
+import RecyclingCompanyDashboard from "./RecyclingCompanyDashboard";
 import { Link } from "react-router-dom";
 
 const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
@@ -27,6 +28,12 @@ export default function Dashboard() {
 
   // 1. Check if user is an Admin/Supervisor
   const isAdmin = user?.role === "admin" || user?.role === "Admin";
+
+  // Recycling companies get an entirely separate dashboard (bids,
+  // collections, intake stats) — none of the citizen/collector/admin
+  // report-fetching logic below applies to them.
+  const isRecyclingCompany =
+    user?.role === "recycling_company" || user?.role === "Recycling Company";
 
   // 2. Add state for the Admin Investigation Modal
   const [investigationData, setInvestigationData] = useState(null);
@@ -461,6 +468,10 @@ export default function Dashboard() {
       setRescheduleLoading(false);
     }
   };
+
+  if (isRecyclingCompany) {
+    return <RecyclingCompanyDashboard />;
+  }
 
   return (
     <div className="min-h-screen bg-[#f7faf7] text-gray-800">
