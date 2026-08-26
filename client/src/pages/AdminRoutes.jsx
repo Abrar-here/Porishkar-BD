@@ -149,21 +149,21 @@ function AdminRoutes() {
     originalDistanceKm !== null && currentDistanceKm !== originalDistanceKm;
 
   return (
-    <div className="min-h-screen bg-gray-50 px-6 py-8">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen bg-[#f7faf7] text-gray-800">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
             Collector Route Management
           </h1>
-          <p className="text-gray-500 mt-2">
+          <p className="text-gray-500 mt-1.5 text-sm sm:text-base">
             View any collector's daily route and manually reorder stops for
             urgent cases.
           </p>
         </div>
 
         {/* Collector picker */}
-        <div className="bg-white rounded-xl shadow p-5 mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-xs p-5 mb-6">
+          <label className="block text-xs font-semibold text-gray-600 mb-2">
             Select a collector
           </label>
           {loadingCollectors ? (
@@ -176,7 +176,7 @@ function AdminRoutes() {
             <select
               value={selectedCollectorId}
               onChange={(e) => setSelectedCollectorId(e.target.value)}
-              className="w-full md:w-96 px-4 py-2 border border-gray-300 rounded-lg bg-white"
+              className="w-full md:w-96 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
             >
               <option value="">-- Choose a collector --</option>
               {collectors.map((c) => (
@@ -189,20 +189,22 @@ function AdminRoutes() {
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-lg">
+          <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-xl border border-red-100">
             {error}
           </div>
         )}
 
         {loadingRoute && (
-          <p className="text-gray-500 text-center py-12">Loading route...</p>
+          <div className="text-center py-16 text-gray-500 font-medium bg-white rounded-2xl border border-gray-100">
+            Loading route...
+          </div>
         )}
 
         {!loadingRoute &&
           selectedCollectorId &&
           route.length === 0 &&
           !error && (
-            <div className="text-center py-16 text-gray-400 bg-white rounded-xl shadow">
+            <div className="text-center py-16 bg-white rounded-2xl border border-gray-100 text-gray-500">
               This collector has no active stops right now.
             </div>
           )}
@@ -210,19 +212,19 @@ function AdminRoutes() {
         {!loadingRoute && route.length > 0 && (
           <>
             {/* Route distance summary */}
-            <div className="mb-6 bg-white rounded-xl shadow p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div className="mb-6 bg-white rounded-2xl border border-gray-100 shadow-xs p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
               <div>
-                <p className="text-sm text-gray-500">
+                <p className="text-xs font-semibold text-gray-500">
                   Total route distance (in current order)
                 </p>
-                <p className="text-2xl font-bold text-gray-800">
+                <p className="text-2xl font-extrabold text-gray-900 mt-0.5">
                   {currentDistanceKm} km
                 </p>
                 {distanceChanged && (
                   <p
-                    className={`text-sm font-medium mt-1 ${
+                    className={`text-sm font-semibold mt-1 ${
                       currentDistanceKm < originalDistanceKm
-                        ? "text-green-600"
+                        ? "text-emerald-600"
                         : "text-amber-600"
                     }`}
                   >
@@ -237,14 +239,14 @@ function AdminRoutes() {
                 type="button"
                 onClick={resetOrder}
                 disabled={resetting}
-                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 disabled:opacity-60 shrink-0"
+                className="px-4 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-50 disabled:opacity-60 transition shrink-0 cursor-pointer"
               >
                 {resetting ? "Resetting..." : "↺ Reset to suggested order"}
               </button>
             </div>
 
             {/* Map with numbered pins */}
-            <div className="mb-6 rounded-xl overflow-hidden shadow">
+            <div className="mb-6 rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
               <MapView
                 center={[route[0].location.lat, route[0].location.lng]}
                 zoom={12}
@@ -264,7 +266,7 @@ function AdminRoutes() {
                 s.isPriority &&
                 !["Resolved", "Closed", "Cancelled"].includes(s.status),
             ) && (
-              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3">
+              <div className="mb-4 p-4 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3">
                 <span className="text-red-700 text-lg">🚨</span>
                 <p className="text-sm text-red-700 font-medium">
                   This route contains priority stops from escalated hotspot
@@ -273,23 +275,23 @@ function AdminRoutes() {
                 </p>
               </div>
             )}
-            <div className="bg-white rounded-xl shadow divide-y divide-gray-100">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-100 overflow-hidden">
               {route.map((stop, index) => (
                 <div key={stop._id} className="p-4 flex items-center gap-4">
-                  <div className="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold text-sm shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm shrink-0">
                     {index + 1}
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-medium text-gray-800">
+                      <p className="font-semibold text-gray-800">
                         {stop.caseReference} — {stop.category}
                       </p>
                       {stop.isPriority &&
                         !["Resolved", "Closed", "Cancelled"].includes(
                           stop.status,
                         ) && (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 bg-red-100 text-red-700 rounded-full border border-red-200 shrink-0">
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 bg-red-100 text-red-700 rounded-full border border-red-200 shrink-0">
                             🚨 Priority
                           </span>
                         )}
@@ -302,12 +304,12 @@ function AdminRoutes() {
                     </p>
                   </div>
 
-                  <div className="flex flex-col gap-1 shrink-0">
+                  <div className="flex flex-col gap-1.5 shrink-0">
                     <button
                       type="button"
                       onClick={() => moveStop(index, -1)}
                       disabled={index === 0}
-                      className="w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
                       aria-label="Move up"
                     >
                       ↑
@@ -316,7 +318,7 @@ function AdminRoutes() {
                       type="button"
                       onClick={() => moveStop(index, 1)}
                       disabled={index === route.length - 1}
-                      className="w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
                       aria-label="Move down"
                     >
                       ↓
@@ -326,12 +328,12 @@ function AdminRoutes() {
               ))}
             </div>
 
-            <div className="mt-6 flex items-center gap-4">
+            <div className="mt-6 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
               <button
                 type="button"
                 onClick={saveOrder}
                 disabled={saving}
-                className="px-6 py-2.5 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 disabled:opacity-60"
+                className="px-6 py-2.5 bg-emerald-700 text-white font-semibold text-sm rounded-xl hover:bg-emerald-800 shadow-sm hover:shadow transition disabled:opacity-60 cursor-pointer"
               >
                 {saving ? "Saving..." : "Save new order"}
               </button>
@@ -341,7 +343,7 @@ function AdminRoutes() {
             </div>
           </>
         )}
-      </div>
+      </main>
     </div>
   );
 }

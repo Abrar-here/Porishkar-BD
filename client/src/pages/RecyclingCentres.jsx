@@ -153,22 +153,22 @@ function RecyclingCentres() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 px-6 py-8">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen bg-[#f7faf7] text-gray-800">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
               Nearby Recycling Centres
             </h1>
-            <p className="text-gray-500 mt-2">
+            <p className="text-gray-500 mt-1.5 text-sm sm:text-base">
               Find a drop-off point for your recyclable materials.
             </p>
           </div>
           {user?.role === "admin" && (
             <Link
               to="/recycling-centres/add"
-              className="px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+              className="px-5 py-2.5 bg-emerald-700 text-white font-semibold text-sm rounded-xl hover:bg-emerald-800 shadow-sm hover:shadow transition inline-block text-center"
             >
               + Add Centre
             </Link>
@@ -176,15 +176,15 @@ function RecyclingCentres() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-xl shadow p-5 mb-4 flex flex-col md:flex-row gap-4 md:items-center">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-xs p-5 mb-4 flex flex-col md:flex-row gap-4 md:items-end">
           <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">
               Filter by material
             </label>
             <select
               value={materialFilter}
               onChange={(e) => setMaterialFilter(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white"
+              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
             >
               <option value="All">All materials</option>
               {MATERIAL_OPTIONS.map((m) => (
@@ -195,12 +195,12 @@ function RecyclingCentres() {
             </select>
           </div>
 
-          <div className="flex flex-col justify-end gap-2">
+          <div className="flex flex-col gap-2">
             <button
               type="button"
               onClick={useMyLocation}
               disabled={locationStatus === "loading"}
-              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium disabled:opacity-60"
+              className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 text-sm font-semibold disabled:opacity-60 transition cursor-pointer"
             >
               {locationStatus === "loading"
                 ? "Getting location..."
@@ -222,7 +222,7 @@ function RecyclingCentres() {
           <button
             type="button"
             onClick={() => setShowMap(!showMap)}
-            className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+            className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 transition shadow-xs cursor-pointer"
           >
             {showMap ? "🗺️ Hide map" : "🗺️ Show map"}
           </button>
@@ -230,7 +230,7 @@ function RecyclingCentres() {
 
         {/* Map view — shows all centres as pins */}
         {showMap && centres.length > 0 && (
-          <div className="mb-6 rounded-xl overflow-hidden shadow">
+          <div className="mb-6 rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
             <MapView
               center={mapCenter}
               zoom={13}
@@ -252,18 +252,22 @@ function RecyclingCentres() {
         )}
 
         {loading && (
-          <p className="text-gray-500 text-center py-12">
+          <div className="text-center py-16 text-gray-500 font-medium bg-white rounded-2xl border border-gray-100">
             Loading recycling centres...
-          </p>
+          </div>
         )}
 
         {error && (
-          <div className="p-4 bg-red-50 text-red-700 rounded-lg">{error}</div>
+          <div className="p-4 bg-red-50 text-red-700 rounded-xl border border-red-100">
+            {error}
+          </div>
         )}
 
         {!loading && !error && centres.length === 0 && (
-          <div className="text-center py-16 text-gray-400 bg-white rounded-xl shadow">
-            <p className="text-lg mb-2">No recycling centres found</p>
+          <div className="text-center py-16 bg-white rounded-2xl border border-gray-100 text-gray-500">
+            <p className="text-lg font-semibold text-gray-700 mb-2">
+              No recycling centres found
+            </p>
             <p className="text-sm">
               {materialFilter !== "All"
                 ? `No centres currently accept ${materialFilter}.`
@@ -277,23 +281,21 @@ function RecyclingCentres() {
           {centres.map((centre) => (
             <div
               key={centre._id}
-              className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
+              className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
             >
               {/* Summary row */}
               <button
                 type="button"
                 onClick={() => toggleExpand(centre._id)}
-                className="w-full text-left p-5 flex justify-between items-start hover:bg-gray-50 transition-colors"
+                className="w-full text-left p-5 flex justify-between items-start hover:bg-gray-50 transition-colors cursor-pointer"
               >
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-gray-800">
-                      {centre.name}
-                    </h3>
+                    <h3 className="font-bold text-gray-900">{centre.name}</h3>
                     <span
-                      className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                      className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
                         centre.isOpen
-                          ? "bg-green-100 text-green-700"
+                          ? "bg-emerald-100 text-emerald-700"
                           : "bg-gray-100 text-gray-500"
                       }`}
                     >
@@ -301,11 +303,11 @@ function RecyclingCentres() {
                     </span>
                   </div>
                   <p className="text-sm text-gray-500 mt-1">{centre.address}</p>
-                  <div className="flex flex-wrap gap-1 mt-2">
+                  <div className="flex flex-wrap gap-1.5 mt-2.5">
                     {centre.acceptedMaterials.map((m) => (
                       <span
                         key={m}
-                        className="text-xs px-2 py-0.5 bg-green-50 text-green-700 rounded-full"
+                        className="text-xs font-medium px-2.5 py-0.5 bg-emerald-50 text-emerald-700 rounded-full"
                       >
                         {m}
                       </span>
@@ -315,7 +317,7 @@ function RecyclingCentres() {
 
                 <div className="text-right shrink-0 ml-4">
                   {centre.distance !== null && (
-                    <p className="text-sm font-medium text-gray-700">
+                    <p className="text-sm font-semibold text-gray-800">
                       {centre.distance} km
                     </p>
                   )}
@@ -329,55 +331,58 @@ function RecyclingCentres() {
 
               {/* Detail panel */}
               {expandedId === centre._id && (
-                <div className="border-t border-gray-100 p-5 bg-gray-50 space-y-3">
+                <div className="border-t border-gray-100 p-5 bg-gray-50 space-y-4">
                   <div>
-                    <p className="text-sm font-medium text-gray-700">
+                    <p className="text-xs font-semibold text-gray-600 mb-0.5">
                       Operating hours
                     </p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-700">
                       {centre.hours.open} – {centre.hours.close}, every day
                     </p>
                   </div>
 
                   {centre.phone && (
                     <div>
-                      <p className="text-sm font-medium text-gray-700">
+                      <p className="text-xs font-semibold text-gray-600 mb-0.5">
                         Contact
                       </p>
-                      <p className="text-sm text-gray-600">{centre.phone}</p>
+                      <p className="text-sm text-gray-700">{centre.phone}</p>
                     </div>
                   )}
 
                   {/* Mini map for this specific centre */}
                   <div>
-                    <p className="text-sm font-medium text-gray-700 mb-2">
+                    <p className="text-xs font-semibold text-gray-600 mb-2">
                       Location
                     </p>
-                    <MapView
-                      center={[centre.location.lat, centre.location.lng]}
-                      zoom={15}
-                      height="200px"
-                      markers={[
-                        {
-                          lat: centre.location.lat,
-                          lng: centre.location.lng,
-                          label: centre.name,
-                          sublabel: centre.address,
-                        },
-                      ]}
-                    />
+                    <div className="rounded-xl overflow-hidden border border-gray-200">
+                      <MapView
+                        center={[centre.location.lat, centre.location.lng]}
+                        zoom={15}
+                        height="200px"
+                        markers={[
+                          {
+                            lat: centre.location.lat,
+                            lng: centre.location.lng,
+                            label: centre.name,
+                            sublabel: centre.address,
+                          },
+                        ]}
+                      />
+                    </div>
                   </div>
 
                   {/* Directions button */}
                   <div>
-                    <p className="text-sm font-medium text-gray-700 mb-2">
+                    <p className="text-xs font-semibold text-gray-600 mb-2">
                       Get directions
                     </p>
+
                     <a
                       href={`https://www.openstreetmap.org/directions?from=&to=${centre.location.lat},${centre.location.lng}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-block px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
+                      className="inline-block px-4 py-2 bg-emerald-700 text-white text-sm font-semibold rounded-xl hover:bg-emerald-800 shadow-sm transition"
                     >
                       🧭 Get directions
                     </a>
@@ -385,8 +390,8 @@ function RecyclingCentres() {
 
                   {/* Rating — citizens only */}
                   {user?.role === "citizen" && (
-                    <div className="pt-2 border-t border-gray-200">
-                      <p className="text-sm font-medium text-gray-700 mb-2">
+                    <div className="pt-3 border-t border-gray-200">
+                      <p className="text-xs font-semibold text-gray-600 mb-2">
                         Rate this centre
                       </p>
                       <div className="flex items-center gap-3 mb-2">
@@ -395,7 +400,7 @@ function RecyclingCentres() {
                           onChange={(e) =>
                             setRatingValue(Number(e.target.value))
                           }
-                          className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm"
+                          className="px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
                         >
                           {[5, 4, 3, 2, 1].map((n) => (
                             <option key={n} value={n}>
@@ -407,7 +412,7 @@ function RecyclingCentres() {
                           type="button"
                           onClick={() => submitRating(centre._id)}
                           disabled={ratingSubmitting}
-                          className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-60"
+                          className="px-4 py-2 bg-emerald-700 text-white text-sm font-semibold rounded-xl hover:bg-emerald-800 shadow-sm transition disabled:opacity-60 cursor-pointer"
                         >
                           {ratingSubmitting ? "Submitting..." : "Submit rating"}
                         </button>
@@ -418,7 +423,7 @@ function RecyclingCentres() {
                         placeholder="Optional — share what your visit was like (max 500 characters)"
                         rows={2}
                         maxLength={500}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-green-500"
+                        className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
                       />
                       <p className="text-xs text-gray-400 mt-1 text-right">
                         {commentValue.length}/500
@@ -433,18 +438,18 @@ function RecyclingCentres() {
 
                   {/* Reviews list — visible to everyone */}
                   {centre.reviews && centre.reviews.length > 0 && (
-                    <div className="pt-2 border-t border-gray-200">
-                      <p className="text-sm font-medium text-gray-700 mb-2">
+                    <div className="pt-3 border-t border-gray-200">
+                      <p className="text-xs font-semibold text-gray-600 mb-2">
                         Reviews ({centre.totalRatings})
                       </p>
-                      <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+                      <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
                         {centre.reviews.map((review, i) => (
                           <div
                             key={review._id || i}
-                            className="bg-white rounded-lg p-3 border border-gray-100"
+                            className="bg-white rounded-xl p-3.5 border border-gray-100"
                           >
                             <div className="flex items-center justify-between">
-                              <p className="text-sm font-medium text-gray-800">
+                              <p className="text-sm font-semibold text-gray-800">
                                 {review.reviewerName || "Anonymous"}
                               </p>
                               <p className="text-xs text-amber-500">
@@ -464,20 +469,20 @@ function RecyclingCentres() {
 
                   {/* Admin controls */}
                   {user?.role === "admin" && (
-                    <div className="pt-2 border-t border-gray-200 flex gap-3">
+                    <div className="pt-3 border-t border-gray-200 flex gap-3">
                       <button
                         type="button"
                         onClick={() =>
                           navigate(`/recycling-centres/${centre._id}/edit`)
                         }
-                        className="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200"
+                        className="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-200 transition cursor-pointer"
                       >
                         Edit Centre
                       </button>
                       <button
                         type="button"
                         onClick={() => handleDelete(centre._id, centre.name)}
-                        className="px-4 py-2 bg-red-50 text-red-600 text-sm font-medium rounded-lg hover:bg-red-100 border border-red-100"
+                        className="px-4 py-2 bg-red-50 text-red-600 text-sm font-semibold rounded-xl hover:bg-red-100 border border-red-100 transition cursor-pointer"
                       >
                         Delete Centre
                       </button>
@@ -488,7 +493,7 @@ function RecyclingCentres() {
             </div>
           ))}
         </div>
-      </div>
+      </main>
     </div>
   );
 }

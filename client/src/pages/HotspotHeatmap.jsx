@@ -88,13 +88,13 @@ function HotspotHeatmap() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 px-6 py-8">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen bg-[#f7faf7] text-gray-800">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-800">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
             Waste Hotspot Map
           </h1>
-          <p className="text-gray-500 mt-2">
+          <p className="text-gray-500 mt-1.5 text-sm sm:text-base">
             Complaint density across the city — green for low activity, red for
             high-density zones.
           </p>
@@ -102,15 +102,15 @@ function HotspotHeatmap() {
 
         {/* Filter controls — admin only, per the requirement */}
         {isAdmin && (
-          <div className="bg-white rounded-xl shadow p-5 mb-6 flex flex-col md:flex-row md:items-end gap-4">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-xs p-5 mb-6 flex flex-col md:flex-row md:items-end gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">
                 Division
               </label>
               <select
                 value={division}
                 onChange={(e) => setDivision(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg bg-white"
+                className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
               >
                 <option value="">All divisions</option>
                 {availableDivisions.map((d) => (
@@ -122,13 +122,13 @@ function HotspotHeatmap() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">
                 Time window
               </label>
               <select
                 value={days}
                 onChange={(e) => setDays(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg bg-white"
+                className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
               >
                 {TIME_WINDOWS.map((w) => (
                   <option key={w.value} value={w.value}>
@@ -138,22 +138,27 @@ function HotspotHeatmap() {
               </select>
             </div>
 
-            <p className="text-sm text-gray-400">
-              {points.length} reports shown
+            <p className="text-sm text-gray-500">
+              <span className="font-semibold text-gray-700">
+                {points.length}
+              </span>{" "}
+              reports shown
             </p>
           </div>
         )}
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-lg">
+          <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-xl border border-red-100">
             {error}
           </div>
         )}
 
         {loading ? (
-          <p className="text-gray-500 text-center py-12">Loading heatmap...</p>
+          <div className="text-center py-16 text-gray-500 font-medium bg-white rounded-2xl border border-gray-100 mb-6">
+            Loading heatmap...
+          </div>
         ) : (
-          <div className="rounded-xl overflow-hidden shadow mb-6">
+          <div className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm mb-6">
             <MapContainer
               center={DHAKA_CENTER}
               zoom={12}
@@ -171,10 +176,8 @@ function HotspotHeatmap() {
 
         {/* Hotspot escalation info — admin only */}
         {isAdmin && (
-          <div className="bg-white rounded-xl shadow p-5">
-            <h3 className="font-semibold text-gray-800 mb-1">
-              Escalation Alerts
-            </h3>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <h3 className="font-bold text-gray-900 mb-1">Escalation Alerts</h3>
             <p className="text-xs text-gray-400 mb-3">
               Clusters with more than 5 unresolved reports within 500m over the
               last 30 days.
@@ -187,14 +190,14 @@ function HotspotHeatmap() {
                 No clusters currently meet the escalation threshold.
               </p>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {hotspots.map((h, i) => (
                   <div
                     key={i}
-                    className="p-3 bg-red-50 border border-red-100 rounded-lg text-sm flex items-center justify-between gap-4"
+                    className="p-4 bg-red-50 border border-red-100 rounded-xl text-sm flex items-center justify-between gap-4"
                   >
                     <div>
-                      <p className="font-medium text-red-700">
+                      <p className="font-semibold text-red-700">
                         {h.reportCount} unresolved reports clustered near{" "}
                         {h.centerLat.toFixed(4)}, {h.centerLng.toFixed(4)}
                       </p>
@@ -204,7 +207,7 @@ function HotspotHeatmap() {
                     </div>
 
                     {escalatedIndexes.has(i) ? (
-                      <span className="text-xs font-medium text-green-700 bg-green-100 px-3 py-1.5 rounded-lg shrink-0">
+                      <span className="text-xs font-semibold text-emerald-700 bg-emerald-100 px-3.5 py-2 rounded-xl shrink-0">
                         ✓ Escalated
                       </span>
                     ) : (
@@ -212,7 +215,7 @@ function HotspotHeatmap() {
                         type="button"
                         onClick={() => handleEscalate(h, i)}
                         disabled={escalatingIndex === i}
-                        className="text-xs font-medium text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg shrink-0 disabled:opacity-60"
+                        className="text-xs font-semibold text-white bg-red-600 hover:bg-red-700 px-3.5 py-2 rounded-xl shrink-0 disabled:opacity-60 transition cursor-pointer"
                       >
                         {escalatingIndex === i
                           ? "Escalating..."
@@ -225,7 +228,7 @@ function HotspotHeatmap() {
             )}
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }

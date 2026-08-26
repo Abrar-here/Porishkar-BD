@@ -60,73 +60,85 @@ function BidManagement() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-500">Loading offers...</p>
+      <div className="min-h-screen bg-[#f7faf7] flex items-center justify-center">
+        <p className="text-gray-500 font-medium">Loading offers...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 px-6 py-10">
-      <div className="max-w-5xl mx-auto">
-        <Link to="/my-listings" className="text-green-600 hover:underline">
+    <div className="min-h-screen bg-[#f7faf7] text-gray-800">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+        <Link
+          to="/my-listings"
+          className="inline-block text-sm text-emerald-700 font-semibold hover:underline"
+        >
           ← Back to My Listings
         </Link>
 
-        <h1 className="text-3xl font-bold text-gray-800 mt-6">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mt-4 tracking-tight">
           Incoming Offers
         </h1>
 
         {error && (
-          <div className="mt-5 p-4 bg-red-50 text-red-600 rounded-lg">
+          <div className="mt-5 p-4 bg-red-50 text-red-700 rounded-xl border border-red-100">
             {error}
           </div>
         )}
 
         {bids.length === 0 ? (
-          <div className="bg-white rounded-xl shadow p-8 mt-6 text-center">
-            <h2 className="text-xl font-semibold text-gray-700">
-              No Offers Yet
-            </h2>
-            <p className="text-gray-500 mt-2">
+          <div className="bg-white rounded-2xl border border-gray-100 p-12 mt-6 text-center">
+            <h2 className="text-xl font-bold text-gray-800">No Offers Yet</h2>
+            <p className="text-gray-500 mt-2 text-sm">
               Buyers have not submitted any offers.
             </p>
           </div>
         ) : (
-          <div className="space-y-5 mt-6">
+          <div className="space-y-4 mt-6">
             {bids.map((bid) => (
-              <div key={bid._id} className="bg-white rounded-xl shadow p-6">
-                <h2 className="text-xl font-bold text-gray-800">
-                  {bid.bidder?.name || "Unknown Buyer"}
-                </h2>
+              <div
+                key={bid._id}
+                className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-6"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-900">
+                      {bid.bidder?.name || "Unknown Buyer"}
+                    </h2>
+                    <p className="text-gray-500 text-sm mt-0.5">
+                      {bid.bidder?.email}
+                    </p>
+                  </div>
 
-                <p className="text-gray-600 mt-2">Email: {bid.bidder?.email}</p>
+                  <span className="shrink-0 text-xs font-semibold text-gray-600 bg-gray-100 px-2.5 py-1 rounded-full">
+                    {bid.status}
+                  </span>
+                </div>
 
-                <p className="mt-3">
-                  <span className="font-semibold">Offer Amount:</span> ৳
-                  {bid.amount}
-                </p>
+                <div className="mt-4 space-y-1.5 text-sm text-gray-700 bg-gray-50 rounded-xl p-3.5 border border-gray-100">
+                  <p>
+                    <span className="font-semibold">Offer Amount:</span> ৳
+                    {bid.amount}
+                  </p>
 
-                <p className="mt-2 text-gray-600">
-                  <span className="font-semibold">Message:</span> {bid.message}
-                </p>
-
-                <p className="mt-2">
-                  <span className="font-semibold">Status:</span> {bid.status}
-                </p>
+                  <p>
+                    <span className="font-semibold">Message:</span>{" "}
+                    {bid.message}
+                  </p>
+                </div>
 
                 {bid.status === "Pending" && (
-                  <div className="flex gap-4 mt-5">
+                  <div className="flex gap-3 mt-5">
                     <button
                       onClick={() => handleAccept(bid._id)}
-                      className="px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                      className="px-5 py-2.5 bg-emerald-700 text-white font-semibold text-sm rounded-xl hover:bg-emerald-800 shadow-sm hover:shadow transition cursor-pointer"
                     >
                       Accept
                     </button>
 
                     <button
                       onClick={() => handleReject(bid._id)}
-                      className="px-5 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                      className="px-5 py-2.5 bg-red-600 text-white font-semibold text-sm rounded-xl hover:bg-red-700 transition cursor-pointer"
                     >
                       Reject
                     </button>
@@ -136,14 +148,14 @@ function BidManagement() {
                 {bid.status === "Accepted" && bid.transaction && (
                   <div className="mt-5">
                     {bid.transaction.paymentStatus === "Pending" && (
-                      <span className="inline-block px-4 py-2 bg-yellow-50 text-yellow-700 rounded-lg border border-yellow-200">
+                      <span className="inline-block px-4 py-2 bg-amber-50 text-amber-700 text-sm font-medium rounded-xl border border-amber-100">
                         Waiting for buyer to pay
                       </span>
                     )}
 
                     {bid.transaction.paymentStatus === "Held" &&
                       (bid.transaction.sellerConfirmed ? (
-                        <span className="inline-block px-4 py-2 bg-blue-50 text-blue-700 rounded-lg border border-blue-200">
+                        <span className="inline-block px-4 py-2 bg-blue-50 text-blue-700 text-sm font-medium rounded-xl border border-blue-100">
                           Confirmed — waiting for buyer to confirm collection
                         </span>
                       ) : (
@@ -152,7 +164,7 @@ function BidManagement() {
                             handleConfirmReceipt(bid.transaction._id)
                           }
                           disabled={confirmingId === bid.transaction._id}
-                          className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60"
+                          className="px-5 py-2.5 bg-blue-600 text-white font-semibold text-sm rounded-xl hover:bg-blue-700 shadow-sm hover:shadow transition disabled:opacity-60 cursor-pointer"
                         >
                           {confirmingId === bid.transaction._id
                             ? "Confirming..."
@@ -161,7 +173,7 @@ function BidManagement() {
                       ))}
 
                     {bid.transaction.paymentStatus === "Released" && (
-                      <span className="inline-block px-4 py-2 bg-green-50 text-green-700 rounded-lg border border-green-200">
+                      <span className="inline-block px-4 py-2 bg-emerald-50 text-emerald-700 text-sm font-medium rounded-xl border border-emerald-100">
                         ✓ Payment released
                       </span>
                     )}
@@ -171,7 +183,7 @@ function BidManagement() {
             ))}
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }

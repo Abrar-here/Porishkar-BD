@@ -115,8 +115,8 @@ function AdminAnalytics() {
 
   if (loading && !data) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-500">Loading analytics...</p>
+      <div className="min-h-screen bg-[#f7faf7] flex items-center justify-center">
+        <p className="text-gray-500 font-medium">Loading analytics...</p>
       </div>
     );
   }
@@ -147,49 +147,49 @@ function AdminAnalytics() {
     })) || [];
 
   return (
-    <div className="min-h-screen bg-gray-50 px-6 py-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-[#f7faf7] text-gray-800">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
             Operational Analytics
           </h1>
-          <p className="text-gray-500 mt-2">
+          <p className="text-gray-500 mt-1.5 text-sm sm:text-base">
             Platform-wide metrics across reports, recycling, and rewards.
           </p>
         </div>
 
         {/* Date range filter + export — the two real actions on this page */}
-        <div className="bg-white rounded-xl shadow p-5 mb-6 flex flex-col md:flex-row md:items-end gap-4">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-xs p-5 mb-6 flex flex-col md:flex-row md:items-end gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">
               From
             </label>
             <input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg"
+              className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">
               To
             </label>
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg"
+              className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">
               Group by
             </label>
             <select
               value={granularity}
               onChange={(e) => setGranularity(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg bg-white"
+              className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
             >
               <option value="day">Day</option>
               <option value="week">Week</option>
@@ -201,7 +201,7 @@ function AdminAnalytics() {
             <button
               type="button"
               onClick={clearDateRange}
-              className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700"
+              className="px-4 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-700 transition cursor-pointer"
             >
               Clear dates
             </button>
@@ -213,14 +213,14 @@ function AdminAnalytics() {
             type="button"
             onClick={handleExport}
             disabled={exporting}
-            className="px-5 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 disabled:opacity-60"
+            className="px-5 py-2.5 bg-emerald-700 text-white font-semibold text-sm rounded-xl hover:bg-emerald-800 shadow-sm hover:shadow transition disabled:opacity-60 cursor-pointer"
           >
             {exporting ? "Exporting..." : "⬇ Export CSV"}
           </button>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-lg">
+          <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-xl border border-red-100">
             {error}
           </div>
         )}
@@ -262,7 +262,7 @@ function AdminAnalytics() {
                       <Tooltip />
                       <Bar
                         dataKey="count"
-                        fill="#16a34a"
+                        fill="#059669"
                         radius={[4, 4, 0, 0]}
                       />
                     </BarChart>
@@ -357,24 +357,24 @@ function AdminAnalytics() {
             </div>
           </>
         )}
-      </div>
+      </main>
     </div>
   );
 }
 
 function StatCard({ label, value }) {
   return (
-    <div className="bg-white rounded-xl shadow p-5">
-      <p className="text-sm text-gray-500">{label}</p>
-      <p className="text-3xl font-bold text-gray-800 mt-1">{value}</p>
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+      <p className="text-xs font-semibold text-gray-500">{label}</p>
+      <p className="text-3xl font-extrabold text-gray-900 mt-1">{value}</p>
     </div>
   );
 }
 
 function ChartCard({ title, subtitle, children }) {
   return (
-    <div className="bg-white rounded-xl shadow p-5">
-      <h3 className="font-semibold text-gray-800">{title}</h3>
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+      <h3 className="font-bold text-gray-900">{title}</h3>
       {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
       <div className="mt-3">{children}</div>
     </div>

@@ -42,7 +42,7 @@ const ViewProofModal = ({ report, onClose, onDisputeSuccess }) => {
       await api.post(`/reports/${report._id}/dispute`, { reason });
 
       alert(
-        "Dispute submitted successfully! Case is locked for Admin/Supervisor investigation."
+        "Dispute submitted successfully! Case is locked for Admin/Supervisor investigation.",
       );
 
       if (onDisputeSuccess) {
@@ -52,7 +52,7 @@ const ViewProofModal = ({ report, onClose, onDisputeSuccess }) => {
     } catch (err) {
       setErrorMsg(
         err.response?.data?.message ||
-          "Failed to raise dispute. Please try again."
+          "Failed to raise dispute. Please try again.",
       );
     } finally {
       setSubmitting(false);
@@ -60,15 +60,15 @@ const ViewProofModal = ({ report, onClose, onDisputeSuccess }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl p-6 max-w-sm w-full text-center shadow-xl">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-2xl max-w-md w-full shadow-xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-start justify-between gap-4 mb-4 pr-2">
+        <div className="flex items-start justify-between gap-4 border-b border-gray-100 px-6 py-5">
           <h3 className="text-lg font-bold text-gray-900 break-all text-left">
-            Proof of Collection - ID#{report._id}
+            Proof of Collection — #{report._id}
           </h3>
           <span
-            className={`shrink-0 px-3 py-1 text-xs font-medium rounded-full ${
+            className={`shrink-0 px-3 py-1 text-xs font-semibold rounded-full ${
               report.isDisputed
                 ? "bg-amber-100 text-amber-800 border border-amber-300"
                 : "bg-blue-900 text-white"
@@ -78,103 +78,103 @@ const ViewProofModal = ({ report, onClose, onDisputeSuccess }) => {
           </span>
         </div>
 
-        {/* Cloudinary Image Box */}
-        <div className="my-4 border rounded-xl overflow-hidden bg-gray-100">
-          <img
-            src={imageUrl}
-            alt="Proof of Collection"
-            className="w-full h-64 object-cover"
-          />
-        </div>
+        <div className="p-6 text-center">
+          {/* Cloudinary Image Box */}
+          <div className="border border-gray-200 rounded-xl overflow-hidden bg-gray-100">
+            <img
+              src={imageUrl}
+              alt="Proof of Collection"
+              className="w-full h-64 object-cover"
+            />
+          </div>
 
-        {/* Upload Tag */}
-        <p className="text-xs text-gray-500 font-medium">
-          Uploaded via Cloudinary API
-        </p>
-
-        {/* Original Metadata Block */}
-        <div className="mt-3 text-xs text-gray-700 space-y-1 text-left">
-          <p>
-            <strong>Timestamp:</strong> {formattedDate}
+          {/* Upload Tag */}
+          <p className="text-xs text-gray-400 font-medium mt-2">
+            Uploaded via Cloudinary API
           </p>
-          {location?.latitude && location?.longitude && (
+
+          {/* Original Metadata Block */}
+          <div className="mt-3 text-xs text-gray-700 space-y-1 text-left bg-gray-50 rounded-xl p-3 border border-gray-100">
             <p>
-              <strong>GPS Coordinates:</strong> {location.latitude.toFixed(4)}°
-              N, {location.longitude.toFixed(4)}° E
+              <strong>Timestamp:</strong> {formattedDate}
+            </p>
+            {location?.latitude && location?.longitude && (
+              <p>
+                <strong>GPS Coordinates:</strong> {location.latitude.toFixed(4)}
+                ° N, {location.longitude.toFixed(4)}° E
+              </p>
+            )}
+          </div>
+
+          {/* 24-Hour Dispute Integration */}
+          {report.isDisputed ? (
+            <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-xl text-xs text-red-800 font-semibold text-center">
+              🚨 Case Disputed — Locked Under Admin/Supervisor Investigation
+            </div>
+          ) : isWithin24Hours ? (
+            !showDisputeInput ? (
+              <button
+                type="button"
+                onClick={() => setShowDisputeInput(true)}
+                className="mt-4 w-full text-xs text-red-600 hover:text-red-700 font-semibold underline text-center cursor-pointer"
+              >
+                Disagree with completion? Raise a Dispute (within 24h)
+              </button>
+            ) : (
+              <div className="mt-4 space-y-2 bg-red-50 p-3 rounded-xl border border-red-100 text-left">
+                <label className="text-xs font-semibold text-red-900 block">
+                  Reason for Disagreement
+                </label>
+                <textarea
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  placeholder="Describe why you disagree (e.g. waste still left behind)..."
+                  className="w-full p-2.5 bg-white border border-red-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-red-500 transition"
+                  rows={2}
+                />
+
+                {errorMsg && (
+                  <p className="text-xs text-red-600 font-medium">{errorMsg}</p>
+                )}
+
+                <div className="flex justify-end gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowDisputeInput(false);
+                      setErrorMsg("");
+                    }}
+                    className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-lg transition cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleRaiseDispute}
+                    disabled={submitting}
+                    className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg disabled:opacity-50 transition cursor-pointer"
+                  >
+                    {submitting ? "Submitting..." : "Submit Dispute"}
+                  </button>
+                </div>
+              </div>
+            )
+          ) : (
+            <p className="mt-4 text-xs text-gray-400">
+              Dispute period closed (24 hours exceeded)
             </p>
           )}
-        </div>
 
-        {/* 24-Hour Dispute Integration */}
-        {report.isDisputed ? (
-          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-800 font-semibold text-center">
-            🚨 Case Disputed — Locked Under Admin/Supervisor Investigation
-          </div>
-        ) : isWithin24Hours ? (
-          !showDisputeInput ? (
+          {/* Close Button */}
+          <div className="mt-6">
             <button
               type="button"
-              onClick={() => setShowDisputeInput(true)}
-              className="mt-3 w-full text-xs text-red-600 hover:text-red-700 font-semibold underline text-center cursor-pointer"
+              onClick={onClose}
+              className="w-full bg-emerald-700 hover:bg-emerald-800 text-white py-2.5 rounded-xl font-semibold shadow-sm hover:shadow transition cursor-pointer"
             >
-              Disagree with completion? Raise a Dispute (within 24h)
+              Close
             </button>
-          ) : (
-            <div className="mt-3 space-y-2 bg-red-50 p-3 rounded-xl border border-red-200 text-left">
-              <label className="text-[11px] font-bold text-red-900 block">
-                Reason for Disagreement:
-              </label>
-              <textarea
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                placeholder="Describe why you disagree (e.g. waste still left behind)..."
-                className="w-full p-2 bg-white border border-red-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-red-500"
-                rows={2}
-              />
-
-              {errorMsg && (
-                <p className="text-[11px] text-red-600 font-medium">
-                  {errorMsg}
-                </p>
-              )}
-
-              <div className="flex justify-end gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowDisputeInput(false);
-                    setErrorMsg("");
-                  }}
-                  className="px-3 py-1 bg-gray-200 text-gray-700 text-xs font-medium rounded-lg cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleRaiseDispute}
-                  disabled={submitting}
-                  className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg disabled:opacity-50 cursor-pointer"
-                >
-                  {submitting ? "Submitting..." : "Submit Dispute"}
-                </button>
-              </div>
-            </div>
-          )
-        ) : (
-          <p className="mt-3 text-[11px] text-gray-400">
-            Dispute period closed (24 hours exceeded)
-          </p>
-        )}
-
-        {/* Close Button */}
-        <div className="mt-6">
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-full bg-emerald-700 hover:bg-emerald-800 text-white py-2.5 rounded-xl font-semibold transition cursor-pointer"
-          >
-            Close
-          </button>
+          </div>
         </div>
       </div>
     </div>

@@ -76,11 +76,13 @@ function CollectorRoute() {
   }, [fetchRoute]);
 
   return (
-    <div className="min-h-screen bg-[#f7faf7] px-6 py-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-[#f7faf7] text-gray-800">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">My Route Today</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+            My Route Today
+          </h1>
+          <p className="text-gray-500 mt-1.5 text-sm sm:text-base">
             Your daily work plan, grouped by proximity to minimise travel.
           </p>
           {locationStatus === "denied" && (
@@ -92,13 +94,13 @@ function CollectorRoute() {
         </div>
 
         {loading && (
-          <p className="text-gray-500 text-center py-12">
+          <div className="text-center py-16 text-gray-500 font-medium bg-white rounded-2xl border border-gray-100">
             Loading your route...
-          </p>
+          </div>
         )}
 
         {error && (
-          <div className="p-4 bg-red-50 text-red-700 rounded-lg mb-6">
+          <div className="p-4 bg-red-50 text-red-700 rounded-xl border border-red-100 mb-6">
             {error}
           </div>
         )}
@@ -112,8 +114,13 @@ function CollectorRoute() {
 
         {!loading && route.length > 0 && (
           <>
-            <div className="mb-4 flex items-center justify-between text-sm text-gray-500">
-              <p>Total distance: {totalDistanceKm} km</p>
+            <div className="mb-4 flex items-center justify-between text-sm text-gray-500 bg-white rounded-2xl border border-gray-100 shadow-xs px-5 py-3.5">
+              <p>
+                Total distance:{" "}
+                <span className="font-semibold text-gray-700">
+                  {totalDistanceKm} km
+                </span>
+              </p>
               {lastUpdated && (
                 <p>
                   Updated{" "}
@@ -125,7 +132,7 @@ function CollectorRoute() {
               )}
             </div>
 
-            <div className="mb-6 rounded-2xl overflow-hidden shadow">
+            <div className="mb-6 rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
               <MapView
                 center={[route[0].location.lat, route[0].location.lng]}
                 zoom={12}
@@ -139,7 +146,7 @@ function CollectorRoute() {
               />
             </div>
 
-            <div className="bg-white rounded-2xl shadow divide-y divide-gray-100">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-100 overflow-hidden">
               {route.map((stop, index) => (
                 <div key={stop._id} className="p-4 flex items-center gap-4">
                   <div className="w-9 h-9 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold shrink-0">
@@ -156,7 +163,7 @@ function CollectorRoute() {
                       {stop.reportedBy?.name} · {stop.reportedBy?.phone}
                     </p>
                   </div>
-                  <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 shrink-0">
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 shrink-0">
                     {stop.status}
                   </span>
                 </div>
@@ -164,7 +171,7 @@ function CollectorRoute() {
             </div>
           </>
         )}
-      </div>
+      </main>
     </div>
   );
 }

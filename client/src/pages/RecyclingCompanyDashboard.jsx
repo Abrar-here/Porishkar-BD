@@ -9,21 +9,21 @@ import {
 
 const BID_STATUS_STYLES = {
   Pending: "bg-amber-100 text-amber-700",
-  Accepted: "bg-green-100 text-green-700",
+  Accepted: "bg-emerald-100 text-emerald-700",
   Rejected: "bg-red-100 text-red-700",
 };
 
 const COLLECTION_STATUS_STYLES = {
   Waiting: "bg-amber-100 text-amber-700",
   Collected: "bg-blue-100 text-blue-700",
-  Confirmed: "bg-green-100 text-green-700",
+  Confirmed: "bg-emerald-100 text-emerald-700",
 };
 
 function StatCard({ label, value, sublabel }) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-      <p className="text-sm text-gray-500">{label}</p>
-      <p className="text-2xl font-bold text-gray-800 mt-1">{value}</p>
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+      <p className="text-xs font-semibold text-gray-500">{label}</p>
+      <p className="text-2xl font-extrabold text-gray-900 mt-1">{value}</p>
       {sublabel && <p className="text-xs text-gray-400 mt-1">{sublabel}</p>}
     </div>
   );
@@ -76,10 +76,8 @@ function RecyclingCompanyDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 px-6 py-8">
-        <p className="text-gray-500 text-center py-12">
-          Loading your dashboard...
-        </p>
+      <div className="min-h-screen bg-[#f7faf7] flex items-center justify-center">
+        <p className="text-gray-500 font-medium">Loading your dashboard...</p>
       </div>
     );
   }
@@ -96,29 +94,29 @@ function RecyclingCompanyDashboard() {
   const filteredBids = bids.filter((b) => b.status === bidTab);
 
   return (
-    <div className="min-h-screen bg-gray-50 px-6 py-8">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen bg-[#f7faf7] text-gray-800">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
         {/* Header */}
         <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
               Recycling Company Dashboard
             </h1>
-            <p className="text-gray-500 mt-2">
+            <p className="text-gray-500 mt-1.5 text-sm sm:text-base">
               Track your bids, confirm collections, and see your recycling
               intake.
             </p>
           </div>
           <Link
             to="/marketplace"
-            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg whitespace-nowrap"
+            className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold rounded-xl shadow-sm hover:shadow transition whitespace-nowrap inline-block text-center"
           >
             Browse Marketplace
           </Link>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-lg">
+          <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-xl border border-red-100">
             {error}
           </div>
         )}
@@ -150,17 +148,17 @@ function RecyclingCompanyDashboard() {
         {/* Needs Action */}
         {(pendingCollections.length > 0 || acceptedBidsCount > 0) && (
           <div className="mb-8">
-            <h2 className="text-lg font-bold text-gray-800 mb-3">
+            <h2 className="text-lg font-bold text-gray-900 mb-3">
               Needs Your Action
             </h2>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 divide-y divide-gray-100">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-100">
               {pendingCollections.map((t) => (
                 <div
                   key={t._id}
                   className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-3"
                 >
                   <div>
-                    <p className="font-semibold text-gray-800">
+                    <p className="font-bold text-gray-900">
                       {t.listing?.title || "Listing"}
                     </p>
                     <p className="text-sm text-gray-500">
@@ -175,7 +173,7 @@ function RecyclingCompanyDashboard() {
                     type="button"
                     onClick={() => handleConfirmCollection(t._id)}
                     disabled={confirmingId === t._id}
-                    className="shrink-0 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg disabled:opacity-60"
+                    className="shrink-0 px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold rounded-xl shadow-sm hover:shadow transition disabled:opacity-60 cursor-pointer"
                   >
                     {confirmingId === t._id
                       ? "Confirming..."
@@ -193,7 +191,7 @@ function RecyclingCompanyDashboard() {
                   </p>
                   <Link
                     to="/my-offers"
-                    className="shrink-0 text-sm text-green-600 hover:text-green-700 font-medium"
+                    className="shrink-0 text-sm text-emerald-700 hover:text-emerald-800 font-semibold"
                   >
                     Go to My Offers →
                   </Link>
@@ -205,17 +203,17 @@ function RecyclingCompanyDashboard() {
 
         {/* My Bids */}
         <div className="mb-8">
-          <h2 className="text-lg font-bold text-gray-800 mb-3">My Bids</h2>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+          <h2 className="text-lg font-bold text-gray-900 mb-3">My Bids</h2>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="flex border-b border-gray-100">
               {["Pending", "Accepted", "Rejected"].map((tab) => (
                 <button
                   key={tab}
                   type="button"
                   onClick={() => setBidTab(tab)}
-                  className={`px-4 py-3 text-sm font-medium ${
+                  className={`px-4 py-3 text-sm font-semibold transition cursor-pointer ${
                     bidTab === tab
-                      ? "text-green-600 border-b-2 border-green-600"
+                      ? "text-emerald-700 border-b-2 border-emerald-700"
                       : "text-gray-500 hover:text-gray-700"
                   }`}
                 >
@@ -238,14 +236,14 @@ function RecyclingCompanyDashboard() {
                     <div>
                       <div className="flex items-center gap-2">
                         <span
-                          className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${
+                          className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
                             BID_STATUS_STYLES[bid.status] ||
                             "bg-gray-100 text-gray-600"
                           }`}
                         >
                           {bid.status}
                         </span>
-                        <p className="font-semibold text-gray-800">
+                        <p className="font-bold text-gray-900">
                           {bid.listing?.title}
                         </p>
                       </div>
@@ -256,7 +254,7 @@ function RecyclingCompanyDashboard() {
                     </div>
                     <Link
                       to={`/marketplace/${bid.listing?._id}`}
-                      className="shrink-0 text-sm text-green-600 hover:text-green-700 font-medium"
+                      className="shrink-0 text-sm text-emerald-700 hover:text-emerald-800 font-semibold"
                     >
                       View listing →
                     </Link>
@@ -269,10 +267,10 @@ function RecyclingCompanyDashboard() {
 
         {/* Intake Statistics */}
         <div>
-          <h2 className="text-lg font-bold text-gray-800 mb-3">
+          <h2 className="text-lg font-bold text-gray-900 mb-3">
             Recycling Intake Statistics
           </h2>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             {stats.byMaterial?.length === 0 ? (
               <p className="text-sm text-gray-400 text-center py-10">
                 No completed collections yet — stats will appear here once
@@ -287,7 +285,7 @@ function RecyclingCompanyDashboard() {
                     className="p-4 flex items-center justify-between"
                   >
                     <div>
-                      <p className="font-semibold text-gray-800">
+                      <p className="font-bold text-gray-900">
                         {row.materialType}
                       </p>
                       <p className="text-sm text-gray-500">
@@ -296,7 +294,7 @@ function RecyclingCompanyDashboard() {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-gray-800">
+                      <p className="font-bold text-gray-900">
                         {row.totalQuantity} {row.unit}
                       </p>
                       <p className="text-sm text-gray-500">
@@ -313,17 +311,17 @@ function RecyclingCompanyDashboard() {
         {/* Transaction history */}
         {transactions.length > 0 && (
           <div className="mt-8">
-            <h2 className="text-lg font-bold text-gray-800 mb-3">
+            <h2 className="text-lg font-bold text-gray-900 mb-3">
               Transaction History
             </h2>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 divide-y divide-gray-100">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-100">
               {transactions.map((t) => (
                 <div
                   key={t._id}
                   className="p-4 flex items-center justify-between gap-4"
                 >
                   <div>
-                    <p className="font-semibold text-gray-800">
+                    <p className="font-bold text-gray-900">
                       {t.listing?.title}
                     </p>
                     <p className="text-sm text-gray-500">
@@ -331,7 +329,7 @@ function RecyclingCompanyDashboard() {
                     </p>
                   </div>
                   <span
-                    className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${
+                    className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
                       COLLECTION_STATUS_STYLES[t.collectionStatus] ||
                       "bg-gray-100 text-gray-600"
                     }`}
@@ -343,7 +341,7 @@ function RecyclingCompanyDashboard() {
             </div>
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }

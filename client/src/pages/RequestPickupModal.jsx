@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
 import api from "../api/axios";
 
-
-export default function RequestPickupModal({ isOpen, onClose, onRequestSuccess }) {
+export default function RequestPickupModal({
+  isOpen,
+  onClose,
+  onRequestSuccess,
+}) {
   // Get today's local date in YYYY-MM-DD
   const getTodayLocalDate = () => {
     const d = new Date();
@@ -58,7 +61,7 @@ export default function RequestPickupModal({ isOpen, onClose, onRequestSuccess }
         parseInt(month) - 1, // Month is 0-indexed in JS
         parseInt(day),
         parseInt(hours),
-        parseInt(minutes)
+        parseInt(minutes),
       );
 
       if (isNaN(combinedDateTime.getTime())) {
@@ -83,10 +86,12 @@ export default function RequestPickupModal({ isOpen, onClose, onRequestSuccess }
       const payload = {
         category,
         estimatedVolume,
-        description: description || `Scheduled for ${pickupDate} at ${formattedTimeString}`,
+        description:
+          description ||
+          `Scheduled for ${pickupDate} at ${formattedTimeString}`,
         location: JSON.stringify(locationObj),
         pickupDate: combinedDateTime.toISOString(), // Standardized ISO timestamp
-        pickupTime: formattedTimeString,             // 👈 REQUIRED BY BACKEND CONTROLLER
+        pickupTime: formattedTimeString, // 👈 REQUIRED BY BACKEND CONTROLLER
       };
 
       const res = await api.post("/reports/pickup", payload);
@@ -105,73 +110,77 @@ export default function RequestPickupModal({ isOpen, onClose, onRequestSuccess }
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-[#f4f9f5] flex flex-col items-center justify-start py-8 px-4">
-      <div className="w-full max-w-4xl space-y-8">
-        
-        {/* Banner */}
-        <div className="bg-[#e7f4ea] text-[#13301a] text-center py-12 px-6 rounded-3xl shadow-xs border border-emerald-100 relative">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl max-w-2xl w-full shadow-xl max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="flex justify-between items-center border-b border-gray-100 px-6 sm:px-8 py-5 sticky top-0 bg-white rounded-t-2xl">
+          <div>
+            <h3 className="text-xl font-extrabold text-gray-900 tracking-tight">
+              Schedule a Pickup
+            </h3>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Request a household waste pickup
+            </p>
+          </div>
           <button
             onClick={onClose}
-            className="absolute top-4 right-6 text-gray-500 hover:text-gray-800 text-2xl font-bold cursor-pointer"
+            className="text-gray-400 hover:text-gray-600 text-xl font-bold cursor-pointer"
           >
             ✕
           </button>
-          <h1 className="text-3xl md:text-4xl font-black tracking-tight">
-            Schedule a New Household Waste Pickup
-          </h1>
         </div>
 
         {/* Form */}
-        <div className="bg-white rounded-2xl p-8 md:p-12 max-w-2xl mx-auto shadow-xs border border-gray-100">
-          <h2 className="text-2xl font-black text-gray-900 mb-6">Request Form</h2>
-
+        <div className="p-6 sm:p-8">
           {error && (
-            <div className="mb-4 bg-red-50 text-red-600 text-xs p-3 rounded-lg border border-red-200">
+            <div className="mb-4 bg-red-50 text-red-700 text-xs p-3 rounded-lg border border-red-100">
               {error}
             </div>
           )}
 
           {smsPreview && (
-            <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-              <p className="text-xs text-yellow-700 font-medium mb-1">📱 SMS notification</p>
-              <p className="text-sm text-yellow-800">{smsPreview}</p>
+            <div className="mb-4 bg-amber-50 border border-amber-100 rounded-lg p-3">
+              <p className="text-xs text-amber-700 font-semibold mb-1">
+                📱 SMS notification
+              </p>
+              <p className="text-sm text-amber-800">{smsPreview}</p>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Pickup Date */}
               <div>
-                <label className="block text-sm font-bold text-gray-800 mb-2">
-                  Select Pickup Date
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+                  Pickup Date
                 </label>
                 <input
                   type="date"
                   required
                   value={pickupDate}
                   onChange={(e) => setPickupDate(e.target.value)}
-                  className="w-full bg-[#f4f7f4] border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
                 />
               </div>
 
               {/* Pickup Time */}
               <div>
-                <label className="block text-sm font-bold text-gray-800 mb-2">
-                  Select Pickup Time
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+                  Pickup Time
                 </label>
                 <input
                   type="time"
                   required
                   value={pickupTime}
                   onChange={(e) => setPickupTime(e.target.value)}
-                  className="w-full bg-[#f4f7f4] border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
                 />
               </div>
             </div>
 
             {/* Address */}
             <div>
-              <label className="block text-sm font-bold text-gray-800 mb-2">
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">
                 Pickup Address
               </label>
               <input
@@ -180,37 +189,39 @@ export default function RequestPickupModal({ isOpen, onClose, onRequestSuccess }
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder="Block B, House 12, Bashundhara R/A"
-                className="w-full bg-[#f4f7f4] border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
               />
             </div>
 
             {/* Waste Type */}
             <div>
-              <label className="block text-sm font-bold text-gray-800 mb-2">
-                Select Waste Type
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+                Waste Type
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full bg-[#f4f7f4] border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
               >
                 <option value="Household">Household</option>
                 <option value="Industrial">Industrial</option>
                 <option value="Medical">Medical</option>
                 <option value="Construction">Construction</option>
-                <option value="Water Body Pollution">Water Body Pollution</option>
+                <option value="Water Body Pollution">
+                  Water Body Pollution
+                </option>
               </select>
             </div>
 
             {/* Estimated Volume */}
             <div>
-              <label className="block text-sm font-bold text-gray-800 mb-2">
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">
                 Estimated Waste Volume
               </label>
               <select
                 value={estimatedVolume}
                 onChange={(e) => setEstimatedVolume(e.target.value)}
-                className="w-full bg-[#f4f7f4] border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
               >
                 <option value="Small">Small — a bag or two</option>
                 <option value="Medium">Medium — several bags</option>
@@ -220,7 +231,7 @@ export default function RequestPickupModal({ isOpen, onClose, onRequestSuccess }
 
             {/* Additional Instructions */}
             <div>
-              <label className="block text-sm font-bold text-gray-800 mb-2">
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">
                 Additional Instructions (Optional)
               </label>
               <textarea
@@ -228,16 +239,23 @@ export default function RequestPickupModal({ isOpen, onClose, onRequestSuccess }
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Details regarding pickup location or specific items..."
-                className="w-full bg-[#f4f7f4] border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition resize-none"
               />
             </div>
 
             {/* Submit */}
-            <div className="pt-2">
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold rounded-xl transition cursor-pointer"
+              >
+                Cancel
+              </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full bg-[#0d7842] hover:bg-[#0a6336] text-white font-bold text-base py-3.5 rounded-xl transition shadow-xs disabled:opacity-50 cursor-pointer"
+                className="px-6 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-sm rounded-xl shadow-sm hover:shadow transition disabled:opacity-50 cursor-pointer"
               >
                 {submitting ? "Submitting..." : "Confirm & Submit Request"}
               </button>

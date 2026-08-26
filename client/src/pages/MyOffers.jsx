@@ -46,65 +46,77 @@ function MyOffers() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        Loading offers...
+      <div className="min-h-screen bg-[#f7faf7] flex items-center justify-center">
+        <p className="text-gray-500 font-medium">Loading offers...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 px-6 py-10">
-      <div className="max-w-5xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-800">My Offers</h1>
+    <div className="min-h-screen bg-[#f7faf7] text-gray-800">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+          My Offers
+        </h1>
 
         {error && (
-          <div className="mt-5 bg-red-50 text-red-600 p-4 rounded">{error}</div>
+          <div className="mt-5 bg-red-50 text-red-700 p-4 rounded-xl border border-red-100">
+            {error}
+          </div>
         )}
 
         {bids.length === 0 ? (
-          <div className="bg-white mt-6 p-8 rounded-xl shadow text-center">
+          <div className="bg-white mt-6 p-12 rounded-2xl border border-gray-100 text-center text-gray-500">
             No offers submitted yet.
           </div>
         ) : (
-          <div className="mt-6 space-y-5">
+          <div className="mt-6 space-y-4">
             {bids.map((bid) => (
-              <div key={bid._id} className="bg-white rounded-xl shadow p-6">
-                <h2 className="text-xl font-bold">
-                  {bid.listing?.title || "Listing removed"}
-                </h2>
+              <div
+                key={bid._id}
+                className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-6"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-900">
+                      {bid.listing?.title || "Listing removed"}
+                    </h2>
 
-                {bid.listing && (
-                  <p className="text-gray-500">
-                    Material: {bid.listing.materialType}
-                  </p>
-                )}
+                    {bid.listing && (
+                      <p className="text-gray-500 text-sm mt-0.5">
+                        Material: {bid.listing.materialType}
+                      </p>
+                    )}
+                  </div>
 
-                <p className="mt-3">
-                  <b>Your Offer:</b> ৳{bid.amount}
-                </p>
-
-                <p>
-                  <b>Your Message:</b> {bid.message}
-                </p>
-
-                <p className="mt-3">
-                  <b>Status:</b>
                   <span
-                    className={
+                    className={`shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full ${
                       bid.status === "Accepted"
-                        ? "text-green-600 font-bold ml-2"
+                        ? "bg-emerald-100 text-emerald-700"
                         : bid.status === "Rejected"
-                          ? "text-red-600 font-bold ml-2"
-                          : "text-yellow-600 font-bold ml-2"
-                    }
+                          ? "bg-red-100 text-red-700"
+                          : "bg-amber-100 text-amber-700"
+                    }`}
                   >
                     {bid.status}
                   </span>
-                </p>
+                </div>
+
+                <div className="mt-4 space-y-1.5 text-sm text-gray-700 bg-gray-50 rounded-xl p-3.5 border border-gray-100">
+                  <p>
+                    <span className="font-semibold">Your Offer:</span> ৳
+                    {bid.amount}
+                  </p>
+
+                  <p>
+                    <span className="font-semibold">Your Message:</span>{" "}
+                    {bid.message}
+                  </p>
+                </div>
 
                 {bid.status === "Accepted" && (
-                  <div className="mt-4">
-                    <p className="text-green-700 font-semibold mb-3">
+                  <div className="mt-5">
+                    <p className="text-emerald-700 font-semibold text-sm mb-3">
                       🎉 Seller accepted your offer!
                     </p>
 
@@ -112,13 +124,13 @@ function MyOffers() {
                       (bid.transaction.paymentStatus === "Pending" ? (
                         <Link
                           to={`/payment/${bid.transaction._id}`}
-                          className="inline-block px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                          className="inline-block px-5 py-2.5 bg-emerald-700 text-white font-semibold text-sm rounded-xl hover:bg-emerald-800 shadow-sm hover:shadow transition"
                         >
                           Pay Now
                         </Link>
                       ) : bid.transaction.paymentStatus === "Held" ? (
                         bid.transaction.buyerConfirmed ? (
-                          <span className="inline-flex items-center gap-2 px-5 py-2 bg-blue-50 text-blue-700 rounded-lg font-medium border border-blue-200">
+                          <span className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 text-sm font-medium rounded-xl border border-blue-100">
                             Paid — waiting for seller to confirm receipt
                           </span>
                         ) : (
@@ -127,7 +139,7 @@ function MyOffers() {
                               handleConfirmCollection(bid.transaction._id)
                             }
                             disabled={confirmingId === bid.transaction._id}
-                            className="inline-block px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60"
+                            className="inline-block px-5 py-2.5 bg-blue-600 text-white font-semibold text-sm rounded-xl hover:bg-blue-700 shadow-sm hover:shadow transition disabled:opacity-60 cursor-pointer"
                           >
                             {confirmingId === bid.transaction._id
                               ? "Confirming..."
@@ -135,7 +147,7 @@ function MyOffers() {
                           </button>
                         )
                       ) : bid.transaction.paymentStatus === "Released" ? (
-                        <span className="inline-flex items-center gap-2 px-5 py-2 bg-green-50 text-green-700 rounded-lg font-medium border border-green-200">
+                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 text-sm font-medium rounded-xl border border-emerald-100">
                           ✓ Paid & released
                         </span>
                       ) : null)}
@@ -143,13 +155,13 @@ function MyOffers() {
                 )}
 
                 {bid.status === "Pending" && (
-                  <p className="mt-3 text-yellow-700">
+                  <p className="mt-4 text-amber-700 text-sm font-medium">
                     Waiting for seller response.
                   </p>
                 )}
 
                 {bid.status === "Rejected" && (
-                  <p className="mt-3 text-red-700">
+                  <p className="mt-4 text-red-700 text-sm font-medium">
                     Seller rejected your offer.
                   </p>
                 )}
@@ -157,7 +169,7 @@ function MyOffers() {
             ))}
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }

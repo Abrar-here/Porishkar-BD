@@ -54,55 +54,73 @@ function VerifyOtp() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50 px-4">
-      <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-md">
-        <h1 className="text-2xl font-bold text-gray-800 mb-1">
-          Verify Your Phone
-        </h1>
-        <p className="text-gray-500 mb-6">
-          Enter the 6-digit code sent to {phone}
-        </p>
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-emerald-50 to-[#f7faf7] px-4 py-10">
+      <div className="w-full max-w-md">
+        {/* Brand header */}
+        <div className="flex items-center justify-center gap-2 mb-6">
+          <span className="w-9 h-9 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-lg">
+            ♻
+          </span>
+          <span className="text-xl font-bold text-emerald-700">
+            PorishkarBD
+          </span>
+        </div>
 
-        {demoOtp && (
-          <div className="mb-4 p-3 bg-yellow-50 text-yellow-800 rounded-lg text-sm">
-            Your verification code: <strong>{demoOtp}</strong>
+        <div className="w-full bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
+          <h1 className="text-2xl font-extrabold text-gray-900 mb-1 tracking-tight">
+            Verify Your Phone
+          </h1>
+          <p className="text-gray-500 mb-6 text-sm">
+            Enter the 6-digit code sent to{" "}
+            <span className="font-semibold text-gray-700">{phone}</span>
+          </p>
+
+          {demoOtp && (
+            <div className="mb-4 p-3 bg-amber-50 text-amber-800 rounded-lg text-sm border border-amber-100">
+              Your verification code: <strong>{demoOtp}</strong>
+            </div>
+          )}
+
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm border border-red-100">
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="mb-4 p-3 bg-emerald-50 text-emerald-700 rounded-lg text-sm border border-emerald-100">
+              {success}
+            </div>
+          )}
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5 text-center">
+                Verification Code
+              </label>
+              <input
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                placeholder="000000"
+                maxLength={6}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition text-center tracking-[0.5em] text-lg font-semibold"
+              />
+            </div>
+
+            <button
+              onClick={handleVerify}
+              disabled={submitting || otp.length !== 6}
+              className="w-full py-2.5 bg-emerald-700 text-white font-semibold rounded-xl text-sm hover:bg-emerald-800 shadow-sm hover:shadow transition disabled:opacity-60 cursor-pointer"
+            >
+              {submitting ? "Verifying..." : "Verify"}
+            </button>
+
+            <button
+              onClick={handleSendOtp}
+              className="w-full py-2 text-emerald-700 font-semibold hover:underline text-sm cursor-pointer"
+            >
+              Resend code
+            </button>
           </div>
-        )}
-
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
-            {error}
-          </div>
-        )}
-        {success && (
-          <div className="mb-4 p-3 bg-green-50 text-green-700 rounded-lg text-sm">
-            {success}
-          </div>
-        )}
-
-        <div className="space-y-4">
-          <input
-            value={otp}
-            onChange={(e) => setOtp(e.target.value)}
-            placeholder="6-digit code"
-            maxLength={6}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-center tracking-widest text-lg"
-          />
-
-          <button
-            onClick={handleVerify}
-            disabled={submitting || otp.length !== 6}
-            className="w-full py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:opacity-60"
-          >
-            {submitting ? "Verifying..." : "Verify"}
-          </button>
-
-          <button
-            onClick={handleSendOtp}
-            className="w-full py-2 text-green-600 font-medium hover:underline text-sm"
-          >
-            Resend code
-          </button>
         </div>
       </div>
     </div>
