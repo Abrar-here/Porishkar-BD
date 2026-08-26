@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../api/axios";
 
 function RewardCentre() {
   const [rewards, setRewards] = useState([]);
@@ -16,13 +16,7 @@ function RewardCentre() {
 
   const fetchRewards = async () => {
     try {
-      const token = localStorage.getItem("token");
-
-      const res = await axios.get("http://localhost:5000/api/rewards", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await api.get("/rewards");
 
       setRewards(res.data.rewards);
     } catch (error) {
@@ -38,21 +32,9 @@ function RewardCentre() {
 
       setVoucher("");
 
-      const token = localStorage.getItem("token");
-
-      const res = await axios.post(
-        "http://localhost:5000/api/redemptions/redeem",
-
-        {
-          rewardId,
-        },
-
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
+      const res = await api.post("/redemptions/redeem", {
+        rewardId,
+      });
 
       setMessage(res.data.message);
 

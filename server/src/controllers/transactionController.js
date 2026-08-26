@@ -187,7 +187,7 @@ export const paymentSuccess = async (req, res) => {
 
     await transaction.save();
 
-    res.redirect("http://localhost:5173/payment-success");
+    res.redirect(`${process.env.CLIENT_URL}/payment-success`);
   } catch (error) {
     console.log("PAYMENT SUCCESS ERROR:", error);
 

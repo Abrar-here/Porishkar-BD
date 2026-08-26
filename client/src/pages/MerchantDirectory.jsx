@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../api/axios";
 
 function MerchantDirectory() {
   const [merchants, setMerchants] = useState([]);
@@ -14,17 +14,7 @@ function MerchantDirectory() {
 
   const fetchMerchants = async () => {
     try {
-      const token = localStorage.getItem("token");
-
-      const response = await axios.get(
-        "http://localhost:5000/api/merchants",
-
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
+      const response = await api.get("/merchants");
 
       setMerchants(response.data.merchants);
     } catch (err) {

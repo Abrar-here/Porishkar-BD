@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../api/axios";
 
 function AdminMerchantManagement() {
   const emptyForm = {
@@ -23,17 +23,9 @@ function AdminMerchantManagement() {
     fetchMerchants();
   }, []);
 
-  const getToken = () => {
-    return localStorage.getItem("token");
-  };
-
   const fetchMerchants = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/merchants", {
-        headers: {
-          Authorization: `Bearer ${getToken()}`,
-        },
-      });
+      const res = await api.get("/merchants");
 
       setMerchants(res.data.merchants);
     } catch (error) {
@@ -60,29 +52,9 @@ function AdminMerchantManagement() {
 
     try {
       if (editingId) {
-        await axios.put(
-          `http://localhost:5000/api/merchants/${editingId}`,
-
-          form,
-
-          {
-            headers: {
-              Authorization: `Bearer ${getToken()}`,
-            },
-          },
-        );
+        await api.put(`/merchants/${editingId}`, form);
       } else {
-        await axios.post(
-          "http://localhost:5000/api/merchants",
-
-          form,
-
-          {
-            headers: {
-              Authorization: `Bearer ${getToken()}`,
-            },
-          },
-        );
+        await api.post("/merchants", form);
       }
 
       setForm({
@@ -121,11 +93,7 @@ function AdminMerchantManagement() {
 
   const deleteMerchant = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/merchants/${id}`, {
-        headers: {
-          Authorization: `Bearer ${getToken()}`,
-        },
-      });
+      await api.delete(`/merchants/${id}`);
 
       fetchMerchants();
     } catch (error) {
