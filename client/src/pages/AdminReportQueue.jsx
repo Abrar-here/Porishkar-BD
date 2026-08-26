@@ -59,213 +59,217 @@ function AdminReportQueue() {
 
   if (loading) {
     return (
-      <div className="max-w-5xl mx-auto p-6">
-        <p className="text-gray-500 text-center py-12">Loading queue...</p>
+      <div className="min-h-screen bg-[#f7faf7] flex items-center justify-center">
+        <p className="text-gray-500 font-medium">Loading queue...</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-6">
-      <h2 className="text-2xl font-bold text-gray-800 mb-1">
-        Report Priority Queue
-      </h2>
-      <p className="text-gray-500 text-sm mb-6">
-        Critical reports appear first. Override a priority if you disagree
-        with the system's suggestion.
-      </p>
+    <div className="min-h-screen bg-[#f7faf7] text-gray-800">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-1 tracking-tight">
+          Report Priority Queue
+        </h2>
+        <p className="text-gray-500 text-sm mb-6">
+          Critical reports appear first. Override a priority if you disagree
+          with the system's suggestion.
+        </p>
 
-      {error && (
-        <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
-          {error}
-        </div>
-      )}
-
-      <div className="space-y-3">
-        {reports.length === 0 && (
-          <p className="text-sm text-gray-400 text-center py-12">
-            No reports yet.
-          </p>
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-xl border border-red-100 text-sm">
+            {error}
+          </div>
         )}
 
-        {reports.map((report) => (
-          <div
-            key={report._id}
-            className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div
-                className="flex-1 cursor-pointer"
-                onClick={() => toggleExpand(report._id)}
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <span
-                    className={`text-xs font-bold px-2.5 py-1 rounded-full ${PRIORITY_STYLES[report.priority]}`}
-                  >
-                    {report.priority}
-                  </span>
-                  {report.priorityOverridden && (
-                    <span className="text-xs text-gray-400 italic">
-                      manually overridden
+        <div className="space-y-3">
+          {reports.length === 0 && (
+            <div className="text-center py-16 bg-white rounded-2xl border border-gray-100 text-gray-400 text-sm">
+              No reports yet.
+            </div>
+          )}
+
+          {reports.map((report) => (
+            <div
+              key={report._id}
+              className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div
+                  className="flex-1 cursor-pointer"
+                  onClick={() => toggleExpand(report._id)}
+                >
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <span
+                      className={`text-xs font-bold px-2.5 py-1 rounded-full ${PRIORITY_STYLES[report.priority]}`}
+                    >
+                      {report.priority}
                     </span>
-                  )}
-                  <span className="text-xs font-mono text-gray-400">
-                    {report.caseReference}
-                  </span>
+                    {report.priorityOverridden && (
+                      <span className="text-xs text-gray-400 italic">
+                        manually overridden
+                      </span>
+                    )}
+                    <span className="text-xs font-mono text-gray-400">
+                      {report.caseReference}
+                    </span>
+                  </div>
+
+                  <p className="text-sm font-bold text-gray-900">
+                    {report.category} — {report.estimatedVolume} volume
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {report.description}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1.5">
+                    📍 {report.location?.address} · Reported by{" "}
+                    {report.reportedBy?.name || "Unknown"} · Status:{" "}
+                    {report.status}
+                  </p>
+                  <p className="text-xs text-emerald-700 font-semibold mt-1.5">
+                    {expandedId === report._id
+                      ? "▲ Hide details"
+                      : "▼ View details"}
+                  </p>
                 </div>
 
-                <p className="text-sm font-semibold text-gray-800">
-                  {report.category} — {report.estimatedVolume} volume
-                </p>
-                <p className="text-sm text-gray-600 mt-1">
-                  {report.description}
-                </p>
-                <p className="text-xs text-gray-400 mt-1">
-                  📍 {report.location?.address} · Reported by{" "}
-                  {report.reportedBy?.name || "Unknown"} · Status:{" "}
-                  {report.status}
-                </p>
-                <p className="text-xs text-green-600 font-medium mt-1">
-                  {expandedId === report._id ? "▲ Hide details" : "▼ View details"}
-                </p>
+                <button
+                  onClick={() => openOverride(report)}
+                  className="shrink-0 px-3.5 py-1.5 text-sm font-semibold border border-gray-200 rounded-xl hover:bg-gray-50 transition cursor-pointer"
+                >
+                  Override
+                </button>
               </div>
 
-              <button
-                onClick={() => openOverride(report)}
-                className="shrink-0 px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                Override
-              </button>
-            </div>
+              {expandedId === report._id && (
+                <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-100 space-y-4">
+                  {/* Photos */}
+                  {report.images && report.images.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold text-gray-600 mb-2">
+                        Photos
+                      </p>
+                      <div className="flex gap-2 flex-wrap">
+                        {report.images.map((url, i) => (
+                          <img
+                            key={i}
+                            src={url}
+                            alt={`Report photo ${i + 1}`}
+                            className="w-20 h-20 object-cover rounded-xl border border-gray-200 cursor-pointer hover:opacity-90 transition"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(url, "_blank");
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
-            {expandedId === report._id && (
-              <div className="mt-3 p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-4">
-                {/* Photos */}
-                {report.images && report.images.length > 0 && (
+                  {/* Contact & scheduling */}
                   <div>
-                    <p className="text-xs font-semibold text-gray-500 mb-2">
-                      Photos
+                    <p className="text-xs font-semibold text-gray-600 mb-0.5">
+                      Reporter contact
                     </p>
-                    <div className="flex gap-2 flex-wrap">
-                      {report.images.map((url, i) => (
-                        <img
-                          key={i}
-                          src={url}
-                          alt={`Report photo ${i + 1}`}
-                          className="w-20 h-20 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-90"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            window.open(url, "_blank");
-                          }}
-                        />
+                    <p className="text-sm text-gray-700">
+                      {report.reportedBy?.email || "No email on file"}
+                      {report.reportedBy?.phone
+                        ? ` · ${report.reportedBy.phone}`
+                        : ""}
+                    </p>
+                  </div>
+
+                  {report.pickupDate && (
+                    <div>
+                      <p className="text-xs font-semibold text-gray-600 mb-0.5">
+                        Scheduled pickup
+                      </p>
+                      <p className="text-sm text-gray-700">
+                        {new Date(report.pickupDate).toLocaleDateString()}
+                        {report.pickupTime ? ` at ${report.pickupTime}` : ""}
+                      </p>
+                    </div>
+                  )}
+
+                  <div>
+                    <p className="text-xs font-semibold text-gray-600 mb-0.5">
+                      Exact coordinates
+                    </p>
+                    <p className="text-sm text-gray-700">
+                      {report.location?.lat}, {report.location?.lng}
+                    </p>
+                  </div>
+
+                  {/* Priority activity log */}
+                  <div>
+                    <p className="text-xs font-semibold text-gray-600 mb-1.5">
+                      Priority history
+                    </p>
+                    <div className="space-y-1.5">
+                      {(report.priorityHistory || []).map((entry, i) => (
+                        <p key={i} className="text-xs text-gray-600">
+                          <span
+                            className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full mr-2 ${PRIORITY_STYLES[entry.priority]}`}
+                          >
+                            {entry.priority}
+                          </span>
+                          {entry.changedBy === "system"
+                            ? "Set automatically by the system"
+                            : "Manually overridden by an admin"}
+                          {entry.reason ? ` — "${entry.reason}"` : ""}
+                          {entry.changedAt
+                            ? ` · ${new Date(entry.changedAt).toLocaleString()}`
+                            : ""}
+                        </p>
                       ))}
                     </div>
                   </div>
-                )}
-
-                {/* Contact & scheduling */}
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 mb-1">
-                    Reporter contact
-                  </p>
-                  <p className="text-sm text-gray-700">
-                    {report.reportedBy?.email || "No email on file"}
-                    {report.reportedBy?.phone
-                      ? ` · ${report.reportedBy.phone}`
-                      : ""}
-                  </p>
                 </div>
+              )}
 
-                {report.pickupDate && (
-                  <div>
-                    <p className="text-xs font-semibold text-gray-500 mb-1">
-                      Scheduled pickup
-                    </p>
-                    <p className="text-sm text-gray-700">
-                      {new Date(report.pickupDate).toLocaleDateString()}
-                      {report.pickupTime ? ` at ${report.pickupTime}` : ""}
-                    </p>
-                  </div>
-                )}
-
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 mb-1">
-                    Exact coordinates
-                  </p>
-                  <p className="text-sm text-gray-700">
-                    {report.location?.lat}, {report.location?.lng}
-                  </p>
-                </div>
-
-                {/* Priority activity log */}
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 mb-1">
-                    Priority history
-                  </p>
-                  <div className="space-y-1">
-                    {(report.priorityHistory || []).map((entry, i) => (
-                      <p key={i} className="text-xs text-gray-600">
-                        <span
-                          className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full mr-2 ${PRIORITY_STYLES[entry.priority]}`}
-                        >
-                          {entry.priority}
-                        </span>
-                        {entry.changedBy === "system"
-                          ? "Set automatically by the system"
-                          : "Manually overridden by an admin"}
-                        {entry.reason ? ` — "${entry.reason}"` : ""}
-                        {entry.changedAt
-                          ? ` · ${new Date(entry.changedAt).toLocaleString()}`
-                          : ""}
-                      </p>
+              {overridingId === report._id && (
+                <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-100 space-y-3">
+                  <div className="flex gap-2 flex-wrap">
+                    {PRIORITY_OPTIONS.map((p) => (
+                      <button
+                        key={p}
+                        onClick={() => setOverrideChoice(p)}
+                        className={`px-3.5 py-1.5 text-xs font-semibold rounded-full border transition cursor-pointer ${
+                          overrideChoice === p
+                            ? "border-emerald-600 bg-emerald-50 text-emerald-700"
+                            : "border-gray-200 text-gray-500 hover:border-gray-300"
+                        }`}
+                      >
+                        {p}
+                      </button>
                     ))}
                   </div>
-                </div>
-              </div>
-            )}
-
-            {overridingId === report._id && (
-              <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-2">
-                <div className="flex gap-2">
-                  {PRIORITY_OPTIONS.map((p) => (
+                  <input
+                    value={overrideReason}
+                    onChange={(e) => setOverrideReason(e.target.value)}
+                    placeholder="Reason for override (optional)"
+                    className="w-full px-3.5 py-2.5 bg-white text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+                  />
+                  <div className="flex gap-3">
                     <button
-                      key={p}
-                      onClick={() => setOverrideChoice(p)}
-                      className={`px-3 py-1 text-xs rounded-full border ${
-                        overrideChoice === p
-                          ? "border-gray-800 font-semibold"
-                          : "border-gray-300 text-gray-500"
-                      }`}
+                      onClick={() => submitOverride(report._id)}
+                      className="px-4 py-2 bg-emerald-700 text-white text-sm font-semibold rounded-xl hover:bg-emerald-800 shadow-sm transition cursor-pointer"
                     >
-                      {p}
+                      Save
                     </button>
-                  ))}
+                    <button
+                      onClick={() => setOverridingId(null)}
+                      className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 transition cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
-                <input
-                  value={overrideReason}
-                  onChange={(e) => setOverrideReason(e.target.value)}
-                  placeholder="Reason for override (optional)"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
-                />
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => submitOverride(report._id)}
-                    className="px-4 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700"
-                  >
-                    Save
-                  </button>
-                  <button
-                    onClick={() => setOverridingId(null)}
-                    className="px-4 py-1.5 text-sm text-gray-500 hover:text-gray-700"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </main>
     </div>
   );
 }

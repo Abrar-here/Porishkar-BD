@@ -13,7 +13,10 @@ export function AuthProvider({ children }) {
     if (token) {
       api
         .get("/auth/me")
-        .then((res) => setUser(res.data.user))
+        .then((res) => {
+          const u = res.data.user;
+          setUser({ ...u, id: u.id || u._id });
+        })
         .catch(() => localStorage.removeItem("token"))
         .finally(() => setLoading(false));
     } else {
@@ -57,13 +60,27 @@ export function AuthProvider({ children }) {
   };
 
   const resetPassword = async (phone, otp, newPassword) => {
-    const res = await api.post("/auth/reset-password", { phone, otp, newPassword });
+    const res = await api.post("/auth/reset-password", {
+      phone,
+      otp,
+      newPassword,
+    });
     return res.data;
   };
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, register, login, logout, sendOtp, verifyOtp, forgotPassword, resetPassword }}
+      value={{
+        user,
+        loading,
+        register,
+        login,
+        logout,
+        sendOtp,
+        verifyOtp,
+        forgotPassword,
+        resetPassword,
+      }}
     >
       {children}
     </AuthContext.Provider>

@@ -56,7 +56,7 @@ const isOpenNow = (hours) => {
 // @access  Public
 export const getAllCentres = async (req, res) => {
   try {
-    const { material, lat, lng } = req.query;
+    const { material, lat, lng, owner } = req.query;
 
     // Build filter — always only show active centres
     const filter = { isActive: true };
@@ -64,6 +64,12 @@ export const getAllCentres = async (req, res) => {
     // If material filter provided, only return centres that accept it
     if (material) {
       filter.acceptedMaterials = { $in: [material] };
+    }
+    // Used by the admin panel to check whether a recycling_company
+    // already has a linked centre before showing the "create centre"
+    // form again (e.g. when reactivating a previously banned account).
+    if (owner) {
+      filter.owner = owner;
     }
 
     let centres = await RecyclingCentre.find(filter);
@@ -190,6 +196,16 @@ export const updateCentre = async (req, res) => {
 
     if (!centre) {
       return res.status(404).json({ message: "Recycling centre not found" });
+    }
+    // A recycling_company can only edit their own centre. Admins can
+    // edit any centre, since this same route now serves both roles.
+    if (
+      req.user.role === "recycling_company" &&
+      centre.owner?.toString() !== req.user._id.toString()
+    ) {
+      return res.status(403).json({
+        message: "You can only edit your own centre",
+      });
     }
 
     // Same validation as addCentre, applied only if acceptedMaterials

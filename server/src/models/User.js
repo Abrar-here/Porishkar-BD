@@ -33,7 +33,7 @@ const userSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["active", "pending", "suspended", "banned"],
+      enum: ["active", "pending", "suspended", "banned", "rejected"],
       default: "active",
     },
     phoneVerified: {

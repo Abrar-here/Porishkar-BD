@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import api from "../api/axios";
 import RequestPickupModal from "./RequestPickupModal";
 import ViewProofModal from "./ViewProofModal";
+import RecyclingCompanyDashboard from "./RecyclingCompanyDashboard";
 import { Link } from "react-router-dom";
 
 const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
@@ -27,6 +28,12 @@ export default function Dashboard() {
 
   // 1. Check if user is an Admin/Supervisor
   const isAdmin = user?.role === "admin" || user?.role === "Admin";
+
+  // Recycling companies get an entirely separate dashboard (bids,
+  // collections, intake stats) — none of the citizen/collector/admin
+  // report-fetching logic below applies to them.
+  const isRecyclingCompany =
+    user?.role === "recycling_company" || user?.role === "Recycling Company";
 
   // 2. Add state for the Admin Investigation Modal
   const [investigationData, setInvestigationData] = useState(null);
@@ -462,14 +469,18 @@ export default function Dashboard() {
     }
   };
 
+  if (isRecyclingCompany) {
+    return <RecyclingCompanyDashboard />;
+  }
+
   return (
     <div className="min-h-screen bg-[#f7faf7] text-gray-800">
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">
         {/* Banner */}
-        <section className="bg-[#e8f5eb] rounded-3xl p-8 flex flex-col md:flex-row justify-between items-start md:items-center relative shadow-xs">
-          <div className="space-y-2 max-w-2xl">
-            <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+        <section className="bg-gradient-to-br from-emerald-50 to-white rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border border-emerald-100 shadow-sm">
+          <div className="space-y-3 max-w-2xl">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight leading-tight">
               {isCollector
                 ? activeTab === "available"
                   ? "Available Community Pickup Tasks"
@@ -477,7 +488,7 @@ export default function Dashboard() {
                 : "Manage your Household Waste Pickups"}
             </h2>
 
-            <p className="text-gray-600 font-medium">
+            <p className="text-gray-600 font-medium text-sm sm:text-base">
               {isCollector
                 ? activeTab === "available"
                   ? "Accept pending pickup requests posted by citizens in your area."
@@ -485,36 +496,35 @@ export default function Dashboard() {
                 : "Discover Household: Household Waste Management"}
             </p>
 
-            {/* Request Pickup Button */}
-            {!isCollector && (
-              <div className="pt-4">
+            {/* Action buttons row */}
+            <div className="flex flex-wrap gap-3 pt-2">
+              {/* Request Pickup Button */}
+              {!isCollector && (
                 <button
                   onClick={() => setIsModalOpen(true)}
-                  className="bg-emerald-700 hover:bg-emerald-800 text-white font-medium px-5 py-2.5 rounded-lg text-sm shadow-xs transition cursor-pointer"
+                  className="bg-emerald-700 hover:bg-emerald-800 text-white font-semibold px-5 py-2.5 rounded-xl text-sm shadow-sm hover:shadow transition cursor-pointer"
                 >
                   + Request Pickup
                 </button>
-              </div>
-            )}
-            {/* Admin: Collector Performance Link */}
-            {isAdmin && (
-              <div className="pt-4">
+              )}
+              {/* Admin: Collector Performance Link */}
+              {isAdmin && (
                 <Link
                   to="/admin/performance"
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow transition duration-200 inline-flex items-center gap-2"
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-sm shadow-sm hover:shadow transition inline-flex items-center gap-2"
                 >
                   <span>📊 Collector Performance</span>
                 </Link>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
-          <div className="mt-6 md:mt-0 flex flex-col items-center text-center space-y-2 bg-white/40 backdrop-blur-xs p-4 rounded-2xl border border-emerald-100">
-            <div className="w-12 h-12 bg-emerald-200/60 text-emerald-800 rounded-full flex items-center justify-center text-xl font-bold">
+          <div className="flex flex-col items-center text-center gap-2 bg-white/70 backdrop-blur-xs p-5 rounded-2xl border border-emerald-100 shrink-0 shadow-xs">
+            <div className="w-12 h-12 bg-emerald-100 text-emerald-800 rounded-full flex items-center justify-center text-xl font-bold">
               ♻️
             </div>
 
-            <p className="text-xs text-emerald-900 max-w-45 font-medium leading-tight">
+            <p className="text-xs text-emerald-900 max-w-45 font-medium leading-relaxed">
               Transparent price discovery without informal middlemen
             </p>
           </div>
@@ -540,13 +550,15 @@ export default function Dashboard() {
         {/* Filters & Grid */}
         <section className="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
           {/* Sidebar */}
-          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-5">
-            <h3 className="text-lg font-bold text-gray-900">Filters</h3>
+          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-5 md:sticky md:top-20">
+            <h3 className="text-lg font-bold text-gray-900 pb-1 border-b border-gray-100">
+              Filters
+            </h3>
 
             <div className="space-y-4">
               {/* Status Filter */}
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">
                   Pickup Status
                 </label>
 
@@ -571,7 +583,7 @@ export default function Dashboard() {
 
               {/* Waste Type Filter */}
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">
                   Waste Type
                 </label>
 
@@ -601,15 +613,15 @@ export default function Dashboard() {
           {/* Cards */}
           <div className="md:col-span-3">
             {loading ? (
-              <div className="text-center py-12 text-gray-500 font-medium">
+              <div className="text-center py-16 text-gray-500 font-medium bg-white rounded-2xl border border-gray-100">
                 Loading pickup records from database...
               </div>
             ) : error ? (
-              <div className="text-center py-12 text-red-600 font-medium">
+              <div className="text-center py-16 text-red-600 font-medium bg-white rounded-2xl border border-red-100">
                 {error}
               </div>
             ) : filteredPickups.length === 0 ? (
-              <div className="text-center py-12 bg-white rounded-2xl border border-gray-100 text-gray-500">
+              <div className="text-center py-16 bg-white rounded-2xl border border-gray-100 text-gray-500">
                 {isAdmin
                   ? "No pickup requests found matching current filters."
                   : isCollector
@@ -619,7 +631,7 @@ export default function Dashboard() {
                     : "No pickup requests found for your account."}
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {filteredPickups.map((item) => {
                   const itemId = getMongoId(item._id || item.id);
 
@@ -634,7 +646,7 @@ export default function Dashboard() {
                   return (
                     <div
                       key={itemId}
-                      className="bg-white rounded-2xl p-5 border border-gray-100 flex flex-col justify-between space-y-4 shadow-sm"
+                      className="bg-white rounded-2xl p-5 border border-gray-100 flex flex-col justify-between gap-4 shadow-sm hover:shadow-md transition-shadow"
                     >
                       {/* Date Header */}
                       <div className="bg-[#eaf5ed] p-4 rounded-xl space-y-1">
@@ -660,7 +672,7 @@ export default function Dashboard() {
                       </div>
 
                       {/* Details */}
-                      <div className="space-y-1">
+                      <div className="space-y-1.5 flex-1">
                         <h4 className="text-sm font-bold text-gray-800">
                           ID: {item.caseReference || itemId}
                         </h4>
@@ -678,7 +690,7 @@ export default function Dashboard() {
                         {isCollector &&
                           activeTab === "assigned" &&
                           item.reportedBy && (
-                            <div className="mt-3 p-2 bg-emerald-50 rounded-lg border border-emerald-100 text-xs space-y-0.5">
+                            <div className="mt-3 p-2.5 bg-emerald-50 rounded-lg border border-emerald-100 text-xs space-y-0.5">
                               <p className="font-bold text-emerald-900">
                                 👤 Reporter Details:
                               </p>
@@ -709,7 +721,7 @@ export default function Dashboard() {
                           🚨 Investigate Details
                         </button>
                       ) : isAdmin ? (
-                        <div className="text-center text-xs text-gray-400 font-medium py-2 bg-gray-50 rounded-lg border border-gray-100">
+                        <div className="text-center text-xs text-gray-400 font-medium py-2.5 bg-gray-50 rounded-lg border border-gray-100">
                           No active disputes
                         </div>
                       ) : isCollector ? (
@@ -748,7 +760,7 @@ export default function Dashboard() {
                         </button>
                       ) : !isNonModifiableStatus && !isLocked ? (
                         /* 2. Show Reschedule & Cancel if report is active and unlocked */
-                        <div className="flex space-x-2 pt-2">
+                        <div className="flex gap-2 pt-1">
                           <button
                             onClick={() => openRescheduleModal(itemId)}
                             className="w-1/2 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs rounded-lg transition cursor-pointer"
@@ -838,7 +850,7 @@ export default function Dashboard() {
                 Must be scheduled at least 4 hours in advance.
               </p>
 
-              <div className="flex justify-end space-x-3 pt-2">
+              <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setIsRescheduleOpen(false)}
@@ -892,7 +904,7 @@ export default function Dashboard() {
                 />
               </div>
 
-              <div className="flex justify-end space-x-3 pt-2">
+              <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => {

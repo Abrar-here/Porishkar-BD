@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 import { sendSms } from "../services/smsService.js";
+import RecyclingCentre from "../models/RecyclingCentre.js";
 
 const generateOtp = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -20,6 +21,23 @@ export const registerUser = async (req, res) => {
       });
     }
 
+    // 1b. Only these roles can be self-registered through the public
+    // form. "admin" is deliberately excluded — per the requirements
+    // doc, municipality/admin accounts are created directly by the
+    // super-admin, never through open registration.
+    const SELF_REGISTERABLE_ROLES = [
+      "citizen",
+      "collector",
+      "recycling_company",
+    ];
+    const requestedRole = role || "citizen";
+
+    if (!SELF_REGISTERABLE_ROLES.includes(requestedRole)) {
+      return res.status(403).json({
+        message: "This role cannot be self-registered",
+      });
+    }
+
     // 2. Check if a user with this email already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -31,7 +49,10 @@ export const registerUser = async (req, res) => {
     // 3. Decide the initial status based on role
     //    Collectors and recycling companies need admin approval first
     let status = "active";
-    if (role === "collector" || role === "recycling_company") {
+    if (
+      requestedRole === "collector" ||
+      requestedRole === "recycling_company"
+    ) {
       status = "pending";
     }
 
@@ -41,7 +62,7 @@ export const registerUser = async (req, res) => {
       email,
       phone,
       password,
-      role: role || "citizen",
+      role: requestedRole,
       status,
     });
 
@@ -88,11 +109,20 @@ export const loginUser = async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    // 4. Block suspended or banned accounts
+    // 4. Block suspended, banned, or not-yet-approved accounts.
+    // "pending" applies to collectors and recycling companies who
+    // haven't been reviewed by an admin yet, per the requirements doc.
     if (user.status === "suspended" || user.status === "banned") {
       return res
         .status(403)
         .json({ message: `Your account is ${user.status}` });
+    }
+
+    if (user.status === "pending") {
+      return res.status(403).json({
+        message:
+          "Your account is pending admin approval. You'll be able to log in once it's reviewed.",
+      });
     }
 
     // 5. Create a signed JWT containing the user's id and role
@@ -283,6 +313,98 @@ export const updateMyLocation = async (req, res) => {
     });
 
     res.status(200).json({ message: "Location updated" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// @desc    List all users, optionally filtered by status or role, for
+//          the admin's central user-management page.
+// @route   GET /api/auth/users
+// @access  Private (admin)
+export const getAllUsers = async (req, res) => {
+  try {
+    const { status, role } = req.query;
+    const filter = {};
+    if (status) filter.status = status;
+    if (role) filter.role = role;
+
+    const users = await User.find(filter)
+      .select("name email phone role status createdAt")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({ users });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// @desc    Update a user's status — approve/reject a pending account,
+//          or suspend/ban/reactivate any existing account. When
+//          approving a recycling_company, an admin can also pass
+//          `centre` details to create their linked RecyclingCentre
+//          in the same action.
+// @route   PUT /api/auth/:userId/status
+// @access  Private (admin)
+export const updateUserStatus = async (req, res) => {
+  try {
+    const { status, centre } = req.body;
+    const validStatuses = [
+      "active",
+      "pending",
+      "suspended",
+      "banned",
+      "rejected",
+    ];
+
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        message: `status must be one of: ${validStatuses.join(", ")}`,
+      });
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.role === "admin") {
+      return res.status(403).json({
+        message: "Admin accounts cannot be modified through this panel",
+      });
+    }
+
+    user.status = status;
+    await user.save();
+
+    // Approving a recycling company can optionally create their
+    // linked centre in the same step, so the admin doesn't have to
+    // separately re-enter the same business details afterward.
+    let createdCentre = null;
+    if (status === "active" && user.role === "recycling_company" && centre) {
+      const existing = await RecyclingCentre.findOne({ owner: user._id });
+      if (!existing) {
+        createdCentre = await RecyclingCentre.create({
+          owner: user._id,
+          name: centre.name,
+          address: centre.address,
+          location: centre.location,
+          acceptedMaterials: centre.acceptedMaterials,
+          hours: centre.hours,
+          phone: centre.phone || null,
+        });
+      }
+    }
+
+    res.status(200).json({
+      message: `Account status updated to ${status}`,
+      user: {
+        id: user._id,
+        name: user.name,
+        status: user.status,
+      },
+      centre: createdCentre,
+    });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
