@@ -4,7 +4,7 @@ function PaymentSuccess() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-emerald-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-green-50 via-white to-emerald-50 px-4">
       <div className="bg-white p-10 rounded-2xl shadow-xl max-w-md w-full text-center border border-green-100">
         {/* Animated success icon */}
         <div className="flex justify-center mb-6">
