@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 import { sendSms } from "../services/smsService.js";
+import RecyclingCentre from "../models/RecyclingCentre.js";
 
 const generateOtp = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -339,13 +340,15 @@ export const getAllUsers = async (req, res) => {
 };
 
 // @desc    Update a user's status — approve/reject a pending account,
-//          or suspend/ban/reactivate any existing account. One
-//          endpoint covers every status transition an admin can make.
+//          or suspend/ban/reactivate any existing account. When
+//          approving a recycling_company, an admin can also pass
+//          `centre` details to create their linked RecyclingCentre
+//          in the same action.
 // @route   PUT /api/auth/:userId/status
 // @access  Private (admin)
 export const updateUserStatus = async (req, res) => {
   try {
-    const { status } = req.body;
+    const { status, centre } = req.body;
     const validStatuses = [
       "active",
       "pending",
@@ -365,9 +368,6 @@ export const updateUserStatus = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // An admin can't accidentally suspend/ban/demote themselves or
-    // another admin through this same panel — a real, if simple,
-    // safeguard against locking out the platform's own administration.
     if (user.role === "admin") {
       return res.status(403).json({
         message: "Admin accounts cannot be modified through this panel",
@@ -377,6 +377,25 @@ export const updateUserStatus = async (req, res) => {
     user.status = status;
     await user.save();
 
+    // Approving a recycling company can optionally create their
+    // linked centre in the same step, so the admin doesn't have to
+    // separately re-enter the same business details afterward.
+    let createdCentre = null;
+    if (status === "active" && user.role === "recycling_company" && centre) {
+      const existing = await RecyclingCentre.findOne({ owner: user._id });
+      if (!existing) {
+        createdCentre = await RecyclingCentre.create({
+          owner: user._id,
+          name: centre.name,
+          address: centre.address,
+          location: centre.location,
+          acceptedMaterials: centre.acceptedMaterials,
+          hours: centre.hours,
+          phone: centre.phone || null,
+        });
+      }
+    }
+
     res.status(200).json({
       message: `Account status updated to ${status}`,
       user: {
@@ -384,6 +403,7 @@ export const updateUserStatus = async (req, res) => {
         name: user.name,
         status: user.status,
       },
+      centre: createdCentre,
     });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });

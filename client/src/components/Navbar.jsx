@@ -88,6 +88,10 @@ function Navbar() {
       label: "My Offers",
     },
     {
+      to: "/my-centre",
+      label: "My Centre",
+    },
+    {
       to: "/merchant-directory",
       label: "Merchant Directory",
     },

@@ -2,6 +2,11 @@ import mongoose from "mongoose";
 
 const recyclingCentreSchema = new mongoose.Schema(
   {
+    owner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
     name: {
       type: String,
       required: [true, "Centre name is required"],

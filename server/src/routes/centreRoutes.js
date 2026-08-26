@@ -24,7 +24,12 @@ router.post("/:id/rate", protect, authorize("citizen"), rateCentre);
 
 // Admin only — manage the centre directory
 router.post("/", protect, authorize("admin"), addCentre);
-router.put("/:id", protect, authorize("admin"), updateCentre);
+router.put(
+  "/:id",
+  protect,
+  authorize("admin", "recycling_company"),
+  updateCentre,
+);
 router.delete("/:id", protect, authorize("admin"), deleteCentre);
 
 export default router;

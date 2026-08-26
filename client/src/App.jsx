@@ -157,6 +157,8 @@ function App() {
           path="/recycling-centres/:id/edit"
           element={<EditRecyclingCentre />}
         />
+        {/* Recycling company edits their own centre — no ID needed */}
+        <Route path="/my-centre" element={<EditRecyclingCentre />} />
 
         {/* Admin / Collector Features */}
 

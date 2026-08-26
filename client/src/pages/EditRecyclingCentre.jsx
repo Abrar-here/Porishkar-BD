@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import api from "../api/axios";
+import { useAuth } from "../context/AuthContext";
 import LocationPickerMap from "../components/LocationPickerMap";
 
 const MATERIAL_OPTIONS = [
@@ -13,8 +14,14 @@ const MATERIAL_OPTIONS = [
 ];
 
 function EditRecyclingCentre() {
-  const { id } = useParams();
+  const { id: paramId } = useParams();
+  const { user } = useAuth();
   const navigate = useNavigate();
+
+  // Admins navigate here with a centre ID in the URL. Recycling
+  // companies reach this page via "/my-centre" with no ID — for them,
+  // we resolve their own centre by owner instead.
+  const [resolvedId, setResolvedId] = useState(paramId || null);
 
   const [form, setForm] = useState({
     name: "",
@@ -34,7 +41,27 @@ function EditRecyclingCentre() {
   useEffect(() => {
     const fetchCentre = async () => {
       try {
-        const res = await api.get(`/centres/${id}`);
+        let centreId = paramId;
+
+        if (!centreId && user?.role === "recycling_company") {
+          const res = await api.get("/centres", {
+            params: { owner: user.id },
+          });
+          const ownCentre = res.data.centres?.[0];
+
+          if (!ownCentre) {
+            setError(
+              "No recycling centre is linked to your account yet. Contact an admin.",
+            );
+            setLoading(false);
+            return;
+          }
+
+          centreId = ownCentre._id;
+          setResolvedId(centreId);
+        }
+
+        const res = await api.get(`/centres/${centreId}`);
         const centre = res.data.centre;
 
         setForm({
@@ -57,7 +84,7 @@ function EditRecyclingCentre() {
     };
 
     fetchCentre();
-  }, [id]);
+  }, [paramId, user]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -71,13 +98,12 @@ function EditRecyclingCentre() {
     );
   };
 
-  // Called by LocationPickerMap when admin clicks the map to move the pin
   const handleLocationPick = (lat, lng, address) => {
     setForm((prev) => ({
       ...prev,
       lat: lat.toFixed(6),
       lng: lng.toFixed(6),
-      address: address, // always overwrite — admin is actively repositioning
+      address: address,
     }));
   };
 
@@ -104,7 +130,7 @@ function EditRecyclingCentre() {
 
     setSubmitting(true);
     try {
-      await api.put(`/centres/${id}`, {
+      await api.put(`/centres/${resolvedId}`, {
         name: form.name.trim(),
         address: form.address.trim(),
         location: { lat, lng },
@@ -113,7 +139,11 @@ function EditRecyclingCentre() {
         phone: form.phone.trim() || null,
       });
 
-      navigate("/recycling-centres");
+      navigate(
+        user?.role === "recycling_company"
+          ? "/dashboard"
+          : "/recycling-centres",
+      );
     } catch (err) {
       setError(
         err.response?.data?.message || "Failed to update recycling centre",
@@ -127,6 +157,16 @@ function EditRecyclingCentre() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <p className="text-gray-500">Loading centre...</p>
+      </div>
+    );
+  }
+
+  if (error && !resolvedId) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-6">
+        <div className="max-w-md text-center">
+          <p className="text-red-600">{error}</p>
+        </div>
       </div>
     );
   }
@@ -162,7 +202,6 @@ function EditRecyclingCentre() {
             />
           </div>
 
-          {/* Pin-drop map */}
           <div>
             <label className="block font-medium text-gray-700 mb-2">
               Location — click the map to move the pin
@@ -300,7 +339,11 @@ function EditRecyclingCentre() {
             </button>
 
             <Link
-              to="/recycling-centres"
+              to={
+                user?.role === "recycling_company"
+                  ? "/dashboard"
+                  : "/recycling-centres"
+              }
               className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
             >
               Cancel
