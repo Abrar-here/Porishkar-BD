@@ -147,7 +147,6 @@ const wasteReportSchema = new mongoose.Schema(
             enum: ["system", "admin"],
             required: true,
           },
-          admin: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
           reason: { type: String, default: "" },
           changedAt: { type: Date, default: Date.now },
         },

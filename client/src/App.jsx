@@ -4,6 +4,7 @@ import { useAuth } from "./context/AuthContext";
 
 import Register from "./pages/Register";
 import Login from "./pages/Login";
+import LandingPage from "./pages/LandingPage";
 import VerifyOtp from "./pages/VerifyOtp";
 import ForgotPassword from "./pages/ForgotPassword";
 
@@ -80,7 +81,7 @@ function App() {
     <Routes>
       <Route
         path="/"
-        element={<Navigate to={user ? "/dashboard" : "/login"} />}
+        element={user ? <Navigate to="/dashboard" /> : <LandingPage />}
       />
 
       <Route

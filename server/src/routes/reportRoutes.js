@@ -52,8 +52,6 @@ router.patch(
   completePickupWithProof,
 );
 
-
-
 router.put("/:id/cancel", protect, authorize("citizen"), cancelReport);
 router.put("/:id/reschedule", protect, authorize("citizen"), rescheduleReport);
 router.get("/available", protect, authorize("collector"), getAvailableReports);
@@ -103,18 +101,10 @@ router.get("/", protect, authorize("admin"), getAllReports);
 
 // F02: Issue Priority & Auto-Categorization Engine — must come before
 // "/:id" below, otherwise Express would treat "priority-queue" as an :id
-router.get(
-  "/priority-queue",
-  protect,
-  authorize("admin"),
-  getPriorityQueue,
-);
-router.put(
-  "/:id/priority",
-  protect,
-  authorize("admin"),
-  overridePriority,
-);
+router.get("/priority-queue", protect, authorize("admin"), getPriorityQueue);
+router.put("/:id/priority", protect, authorize("admin"), overridePriority);
+
+// router.put("/:id", protect, authorize("citizen"), editReport);
 
 router.get("/:id", protect, getReportById);
 
