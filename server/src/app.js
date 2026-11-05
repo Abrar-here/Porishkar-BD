@@ -1,6 +1,10 @@
+import { apiReference } from "@scalar/express-api-reference";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 import express from "express";
 import cors from "cors";
-
 
 import authRoutes from "./routes/authRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
@@ -8,19 +12,15 @@ import listingRoutes from "./routes/listingRoutes.js";
 import centreRoutes from "./routes/centreRoutes.js";
 import bidRoutes from "./routes/bidRoutes.js";
 
-
 import ecoPointsRoutes from "./routes/ecoPointsRoutes.js";
 import leaderboardRoutes from "./routes/leaderboardRoutes.js";
 import badgeRoutes from "./routes/badgeRoutes.js";
 
-
 import transactionRoutes from "./routes/transactionRoutes.js";
-
 
 import merchantRoutes from "./routes/merchantRoutes.js";
 import rewardRoutes from "./routes/rewardRoutes.js";
 import redemptionRoutes from "./routes/redemptionRoutes.js";
-
 
 // Existing demo branch features
 
@@ -29,11 +29,25 @@ import heatmapRoutes from "./routes/heatmapRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 
-
-
 const app = express();
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
+const swaggerFilePath = path.resolve(__dirname, "../swagger-output.json");
+
+// Serve OpenAPI JSON
+app.get("/swagger-output.json", (req, res) => {
+  res.sendFile(swaggerFilePath);
+});
+
+// Serve Scalar documentation
+app.use(
+  "/api-docs",
+  apiReference({
+    url: "/swagger-output.json",
+  }),
+);
 
 // ================================
 // Middleware
@@ -44,235 +58,123 @@ app.use(cors());
 app.use(express.json());
 
 app.use(
-    express.urlencoded({
-        extended:true
-    })
+  express.urlencoded({
+    extended: true,
+  }),
 );
-
-
-
 
 // ================================
 // Marketplace
 // ================================
 
-app.use(
-    "/api/listings",
-    listingRoutes
-);
-
-
-
+app.use("/api/listings", listingRoutes);
 
 // ================================
 // Heatmap & Analytics
 // ================================
 
-app.use(
-    "/api/heatmap",
-    heatmapRoutes
-);
+app.use("/api/heatmap", heatmapRoutes);
 
-
-app.use(
-    "/api/analytics",
-    analyticsRoutes
-);
-
-
-
+app.use("/api/analytics", analyticsRoutes);
 
 // ================================
 // Recycling Centres
 // ================================
 
-app.use(
-    "/api/centres",
-    centreRoutes
-);
-
-
-
+app.use("/api/centres", centreRoutes);
 
 // ================================
 // Eco Points
 // ================================
 
-app.use(
-    "/api/ecopoints",
-    ecoPointsRoutes
-);
+app.use("/api/ecopoints", ecoPointsRoutes);
 
+app.use("/api/leaderboard", leaderboardRoutes);
 
-app.use(
-    "/api/leaderboard",
-    leaderboardRoutes
-);
-
-
-app.use(
-    "/api/badges",
-    badgeRoutes
-);
-
-
-
+app.use("/api/badges", badgeRoutes);
 
 // ================================
 // Admin
 // ================================
 
-app.use(
-    "/api/admin",
-    adminRoutes
-);
-
-
-
+app.use("/api/admin", adminRoutes);
 
 // ================================
 // Notifications
 // ================================
 
-app.use(
-    "/api/notifications",
-    notificationRoutes
-);
-
-
-
+app.use("/api/notifications", notificationRoutes);
 
 // ================================
 // F19 Merchant Directory
 // ================================
 
-app.use(
-    "/api/merchants",
-    merchantRoutes
-);
-
-
-
+app.use("/api/merchants", merchantRoutes);
 
 // ================================
 // F19 Reward Management
 // ================================
 
-app.use(
-    "/api/rewards",
-    rewardRoutes
-);
-
-
-
+app.use("/api/rewards", rewardRoutes);
 
 // ================================
 // F19 Redemption
 // ================================
 
-app.use(
-    "/api/redemptions",
-    redemptionRoutes
-);
-
-
-
+app.use("/api/redemptions", redemptionRoutes);
 
 // ================================
 // F10 Bid System
 // ================================
 
-app.use(
-    "/api/bids",
-    bidRoutes
-);
-
-
-
+app.use("/api/bids", bidRoutes);
 
 // ================================
 // F11 Transaction
 // ================================
 
-app.use(
-    "/api/transactions",
-    transactionRoutes
-);
-
-
-
+app.use("/api/transactions", transactionRoutes);
 
 // ================================
 // Authentication
 // ================================
 
-app.use(
-    "/api/auth",
-    authRoutes
-);
-
-
-
+app.use("/api/auth", authRoutes);
 
 // ================================
 // Reports
 // ================================
 
-app.use(
-    "/api/reports",
-    reportRoutes
-);
-
-
-
+app.use("/api/reports", reportRoutes);
 
 // ================================
 // Health Check
 // ================================
 
-app.get(
-    "/api/health",
-    (req,res)=>{
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    success: true,
 
-        res.status(200).json({
+    status: "ok",
 
-            success:true,
-
-            status:"ok",
-
-            message:"PorishkarBD API is running"
-
-        });
-
-    }
-);
-
-
-
+    message: "PorishkarBD API is running",
+  });
+});
 
 // ================================
 // Error Handler
 // ================================
 
-app.use(
-    (err,req,res,next)=>{
+app.use((err, req, res, next) => {
+  console.error(err);
 
-        console.error(err);
+  res.status(500).json({
+    success: false,
 
+    message: "Server Error",
 
-        res.status(500).json({
-
-            success:false,
-
-            message:"Server Error",
-
-            error:err.message
-
-        });
-
-    }
-);
-
-
+    error: err.message,
+  });
+});
 
 export default app;
