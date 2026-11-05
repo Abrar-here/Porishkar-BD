@@ -22,8 +22,8 @@ const PIPELINE_STEPS = [
 ];
 
 const TEAM = [
-  "Fahmid Alam Khan",
   "Abrar Ahmed",
+  "Fahmid Alam Khan",
   "Maisha Maisara",
   "Ahsanul Fahim Ahmed",
 ];
